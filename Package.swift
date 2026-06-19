@@ -38,7 +38,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/ml-explore/mlx-swift", .upToNextMinor(from: "0.31.4")),
-        .package(url: "https://github.com/wendylabsinc/tensorrt-swift", .upToNextMinor(from: "0.0.4")),
+        .package(url: "https://github.com/wendylabsinc/tensorrt-swift", .upToNextMinor(from: "0.0.5")),
         .package(url: "https://github.com/swiftlang/swift-docc-plugin", from: "1.5.0"),
     ],
     targets: [
