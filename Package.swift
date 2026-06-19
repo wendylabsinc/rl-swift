@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "SwiftRL",
+    name: "RLSwift",
     platforms: [
         .macOS(.v14),
         .iOS(.v17),
@@ -13,27 +13,27 @@ let package = Package(
     ],
     products: [
         .library(
-            name: "SwiftRL",
-            targets: ["SwiftRL"]
+            name: "RLSwift",
+            targets: ["RLSwift"]
         ),
         .library(
-            name: "SwiftRLMLX",
-            targets: ["SwiftRLMLX"]
+            name: "RLSwiftMLX",
+            targets: ["RLSwiftMLX"]
         ),
         .library(
-            name: "SwiftRLTensorRT",
-            targets: ["SwiftRLTensorRT"]
+            name: "RLSwiftTensorRT",
+            targets: ["RLSwiftTensorRT"]
         ),
     ],
     traits: [
         .default(enabledTraits: ["MLXBackend"]),
         .trait(
             name: "MLXBackend",
-            description: "Build the MLX-backed SwiftRL integration target for Apple platforms."
+            description: "Build the MLX-backed RLSwift integration target for Apple platforms."
         ),
         .trait(
             name: "TensorRTBackend",
-            description: "Build the TensorRT-backed SwiftRL integration target for NVIDIA Linux."
+            description: "Build the TensorRT-backed RLSwift integration target for NVIDIA Linux."
         ),
     ],
     dependencies: [
@@ -43,7 +43,7 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "SwiftRL",
+            name: "RLSwift",
             dependencies: [],
             swiftSettings: [
                 .define("SWIFTRL_ENABLE_MLX", .when(traits: ["MLXBackend"])),
@@ -53,9 +53,9 @@ let package = Package(
             ]
         ),
         .target(
-            name: "SwiftRLMLX",
+            name: "RLSwiftMLX",
             dependencies: [
-                "SwiftRL",
+                "RLSwift",
                 .product(name: "MLX", package: "mlx-swift", condition: .when(traits: ["MLXBackend"])),
                 .product(name: "MLXNN", package: "mlx-swift", condition: .when(traits: ["MLXBackend"])),
                 .product(name: "MLXOptimizers", package: "mlx-swift", condition: .when(traits: ["MLXBackend"])),
@@ -69,9 +69,9 @@ let package = Package(
             ]
         ),
         .target(
-            name: "SwiftRLTensorRT",
+            name: "RLSwiftTensorRT",
             dependencies: [
-                "SwiftRL",
+                "RLSwift",
                 .product(
                     name: "TensorRT",
                     package: "tensorrt-swift",
@@ -86,13 +86,13 @@ let package = Package(
             ]
         ),
         .testTarget(
-            name: "SwiftRLTests",
-            dependencies: ["SwiftRL"]
+            name: "RLSwiftTests",
+            dependencies: ["RLSwift"]
         ),
         .testTarget(
-            name: "SwiftRLMLXTests",
+            name: "RLSwiftMLXTests",
             dependencies: [
-                "SwiftRLMLX",
+                "RLSwiftMLX",
                 .product(name: "MLX", package: "mlx-swift", condition: .when(traits: ["MLXBackend"])),
             ],
             swiftSettings: [
@@ -103,9 +103,9 @@ let package = Package(
             ]
         ),
         .testTarget(
-            name: "SwiftRLTensorRTTests",
+            name: "RLSwiftTensorRTTests",
             dependencies: [
-                "SwiftRLTensorRT",
+                "RLSwiftTensorRT",
                 .product(
                     name: "TensorRT",
                     package: "tensorrt-swift",

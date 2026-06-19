@@ -4,11 +4,11 @@ set -euo pipefail
 swift test --enable-code-coverage
 
 BIN_PATH="$(swift build --show-bin-path)"
-TEST_BUNDLE="${BIN_PATH}/SwiftRLPackageTests.xctest"
+TEST_BUNDLE="${BIN_PATH}/RLSwiftPackageTests.xctest"
 PROFDATA="${BIN_PATH}/codecov/default.profdata"
 
 if [[ -d "${TEST_BUNDLE}" ]]; then
-  TEST_BINARY="${TEST_BUNDLE}/Contents/MacOS/SwiftRLPackageTests"
+  TEST_BINARY="${TEST_BUNDLE}/Contents/MacOS/RLSwiftPackageTests"
 else
   TEST_BINARY="${TEST_BUNDLE}"
 fi

@@ -1,6 +1,6 @@
-# SwiftRL
+# RLSwift
 
-SwiftRL is a Swift 6.3+ reinforcement learning package with opt-in MLX and
+RLSwift is a Swift 6.3+ reinforcement learning package with opt-in MLX and
 TensorRT backends for Apple and NVIDIA Linux deployments.
 
 ## Toolchain
@@ -17,18 +17,18 @@ swift --version
 ```sh
 swift test
 ./scripts/check-coverage.sh
-swift package generate-documentation --target SwiftRL
-swift package generate-documentation --target SwiftRLMLX
-swift package generate-documentation --target SwiftRLTensorRT
+swift package generate-documentation --target RLSwift
+swift package generate-documentation --target RLSwiftMLX
+swift package generate-documentation --target RLSwiftTensorRT
 ```
 
 ## Backend Traits
 
 SwiftPM traits are the right fit for backend selection in Swift 6.3+. This
-package keeps the core `SwiftRL` product dependency-light and puts tensor
+package keeps the core `RLSwift` product dependency-light and puts tensor
 integration behind separate products and traits:
 
-- `MLXBackend` builds `SwiftRLMLX` and is enabled by default for Apple
+- `MLXBackend` builds `RLSwiftMLX` and is enabled by default for Apple
   development.
 - `TensorRTBackend` builds the native TensorRT path on NVIDIA Linux.
 - `--disable-default-traits` gives a core-only or TensorRT-only build.
@@ -44,7 +44,7 @@ swift test --disable-default-traits --traits TensorRTBackend
 
 ## Apple Device Support
 
-SwiftRL is intended to run on more than macOS. The package declares support for
+RLSwift is intended to run on more than macOS. The package declares support for
 macOS 14, iOS 17, tvOS 17, and visionOS 1, and iPadOS is covered by SwiftPM's
 iOS platform target. The MLX Swift dependency used by this package declares the
 same Apple platform set and links Apple's Metal and Accelerate frameworks on
@@ -64,8 +64,8 @@ mobile devices.
 ## TensorRT on DGX and NVIDIA Linux
 
 TensorRT is possible, but it should be treated as an NVIDIA Linux deployment
-backend rather than an Apple-device backend. SwiftRL exposes a separate
-`SwiftRLTensorRT` product that depends on
+backend rather than an Apple-device backend. RLSwift exposes a separate
+`RLSwiftTensorRT` product that depends on
 `https://github.com/wendylabsinc/tensorrt-swift` for Linux builds only. That
 keeps iOS, iPadOS, visionOS, and macOS development from pulling CUDA/TensorRT
 modules while allowing a DGX Spark, DGX workstation, Jetson-class robot, or
@@ -73,10 +73,10 @@ NVIDIA Linux host to load TensorRT engines for policy inference.
 
 The intended flow is:
 
-1. Train, fine-tune, or evaluate with `SwiftRL` and `SwiftRLMLX` on Apple
+1. Train, fine-tune, or evaluate with `RLSwift` and `RLSwiftMLX` on Apple
    hardware where that is convenient.
 2. Export the policy to ONNX or a serialized TensorRT engine.
-3. Build and run the `SwiftRLTensorRT` product with
+3. Build and run the `RLSwiftTensorRT` product with
    `--disable-default-traits --traits TensorRTBackend` on NVIDIA Linux with CUDA
    and TensorRT installed.
 4. Keep hard robot safety limits, watchdogs, and emergency-stop handling outside
@@ -95,7 +95,7 @@ critical missing features are the pieces that keep data trustworthy and executio
 bounded when a learned policy is connected to hardware:
 
 - Episode endings must distinguish natural task termination, time-limit
-  truncation, and safety interruption. SwiftRL models that with
+  truncation, and safety interruption. RLSwift models that with
   `StepTermination` on both `StepResult` and `Transition`.
 - Control-loop data must carry timing and latency metadata, because stale
   observations and delayed commands can invalidate otherwise-correct RL updates.
@@ -155,6 +155,6 @@ bounded when a learned policy is connected to hardware:
   `TensorRTPolicyBackend` for NVIDIA Linux TensorRT inference.
 
 Public interfaces are documented with DocC comments and a DocC catalog at
-`Sources/SwiftRL/SwiftRL.docc`,
-`Sources/SwiftRLMLX/SwiftRLMLX.docc`, and
-`Sources/SwiftRLTensorRT/SwiftRLTensorRT.docc`.
+`Sources/RLSwift/RLSwift.docc`,
+`Sources/RLSwiftMLX/RLSwiftMLX.docc`, and
+`Sources/RLSwiftTensorRT/RLSwiftTensorRT.docc`.
