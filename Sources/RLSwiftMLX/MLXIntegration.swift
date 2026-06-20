@@ -28,9 +28,43 @@ public struct MLXBackendSupport: Equatable, Sendable {
 
 #if SWIFTRL_ENABLE_MLX
 public import MLX
+import RLSwift
 
 /// The tensor type used by RLSwift MLX integrations.
 public typealias RLTensor = MLXArray
+
+/// Dense MLX observation batch used by backend learners.
+public struct MLXObservationBatch {
+    /// Row-major scalar values used to create the MLX tensor.
+    public let rowMajorValues: [Float]
+
+    /// Number of observations in the batch.
+    public let batchSize: Int
+
+    /// Number of scalar features per observation.
+    public let featureCount: Int
+
+    /// Creates an MLX tensor from row-major `Float` observations.
+    public init(rows: [[Float]]) throws {
+        guard let first = rows.first else {
+            throw RLSwiftError.invalidSampleCount(0)
+        }
+        guard !first.isEmpty else {
+            throw RLSwiftError.dimensionMismatch(expected: 1, actual: 0)
+        }
+        for row in rows where row.count != first.count {
+            throw RLSwiftError.dimensionMismatch(expected: first.count, actual: row.count)
+        }
+        batchSize = rows.count
+        featureCount = first.count
+        rowMajorValues = rows.flatMap { $0 }
+    }
+
+    /// Tensor shape as ordinary Swift integers for tests, logging, and manifests.
+    public var shape: [Int] {
+        [batchSize, featureCount]
+    }
+}
 
 /// Encodes domain observations into MLX tensors for function approximation.
 public protocol MLXObservationEncoder<Observation> {

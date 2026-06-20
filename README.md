@@ -22,11 +22,47 @@ swift --version
 ```sh
 swift test
 ./scripts/check-coverage.sh
+swift run rl-swift catalog
+swift run rl-swift train --episodes 24
+swift run rl-swift sweep
+swift run rl-swift visualize
 (cd Examples/RobotGridWorld && swift run robot-grid-world)
 swift package generate-documentation --target RLSwift
 swift package generate-documentation --target RLSwiftMLX
 swift package generate-documentation --target RLSwiftTensorRT
 ```
+
+## CLI Workflow
+
+The root package includes an `rl-swift` executable for local smoke tests and CI
+logs:
+
+```sh
+swift run rl-swift catalog
+swift run rl-swift train --episodes 24
+swift run rl-swift sweep
+swift run rl-swift visualize
+```
+
+Use `swift run --disable-default-traits rl-swift catalog` for core-only Linux
+checks that should not compile MLX.
+
+## PufferLib Comparison
+
+RLSwift now covers the core workflow shape that makes PufferLib useful, but it
+is intentionally Swift-native and robot/autonomy-oriented rather than a Python
+drop-in replacement.
+
+| PufferLib capability | RLSwift status | API or command |
+| --- | --- | --- |
+| Training throughput reporting | Implemented as backend-agnostic counters and rates. | `ThroughputMeter`, `TrainingThroughputReport` |
+| PPO learner math | Implemented for GAE and clipped PPO objective evaluation; neural optimizer integration remains backend-specific. | `PPOConfiguration`, `PPOAdvantageEstimator`, `PPOClippedObjective` |
+| CUDA-native execution | Planned and described for CUDA/TensorRT, with TensorRT Linux backend integration; custom fused CUDA kernels are still a future backend layer. | `NativeKernelPlan`, `TensorRTCUDAKernelPlan`, `RLSwiftTensorRT` |
+| Built-in environments | Implemented as a small deterministic suite for smoke tests and examples. | `BuiltInEnvironmentCatalog`, `LineWorldEnvironment`, `BinaryBanditEnvironment`, `MatrixGameEnvironment` |
+| CLI workflow | Implemented for catalog, train, sweep, and visualization commands. | `swift run rl-swift ...` |
+| Sweeps and tuning | Implemented deterministic grid sweeps and Pareto frontier selection. | `SweepPlan`, `SweepTuner` |
+| Visualization | Implemented lightweight terminal dashboards and sparklines for logs. | `TrainingMetricSeries`, `TrainingDashboardSnapshot` |
+| Multi-agent simulation | Implemented protocol and matrix-game environment for game-scale API coverage. | `MultiAgentEnvironment`, `MatrixGameEnvironment` |
 
 ## Swift 6.3 Performance Notes
 
@@ -175,6 +211,13 @@ bounded when a learned policy is connected to hardware:
   deployment and observability.
 - Adapter, vectorized rollout, export/cache, curriculum, evaluation, and visual
   debug descriptors for autonomy workflows.
+- Built-in smoke-test environments with catalog metadata.
+- PPO advantage estimation and clipped objective evaluation.
+- Throughput metering for rollout collection and training loops.
+- Native kernel planning metadata for Swift CPU, MLX, CUDA, and TensorRT paths.
+- Deterministic sweep plans, Pareto frontier tuning, text dashboards, and the
+  `rl-swift` CLI.
+- Multi-agent environment protocols and a matrix-game environment.
 - `ActionSmoother` for low-pass command filtering.
 - `ConstraintSignal` and `ConstraintReport` for constrained robot learning.
 - `ObservationNormalizer` for streaming sensor-feature statistics.
@@ -182,9 +225,11 @@ bounded when a learned policy is connected to hardware:
 - Deterministic `ReplayBuffer` and `PrioritizedReplayBuffer` sampling.
 - `EpsilonGreedyPolicy` and `SoftmaxPolicy` for discrete action spaces.
 - `TabularQAgent` for small state-action spaces.
-- `MLXBackendSupport`, `MLXObservationEncoder`, and `RLTensor` for MLX tensor integration.
-- `TensorRTBackendSupport`, `TensorRTPolicyConfiguration`, and
-  `TensorRTPolicyBackend` for NVIDIA Linux TensorRT inference.
+- `MLXBackendSupport`, `MLXObservationBatch`, `MLXObservationEncoder`, and
+  `RLTensor` for MLX tensor integration.
+- `TensorRTBackendSupport`, `TensorRTPolicyConfiguration`,
+  `TensorRTCUDAKernelPlan`, and `TensorRTPolicyBackend` for NVIDIA Linux
+  TensorRT inference.
 
 Public interfaces are documented with DocC comments and a DocC catalog at
 `Sources/RLSwift/RLSwift.docc`,

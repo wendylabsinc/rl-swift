@@ -245,6 +245,34 @@ import TensorRT
             )
         }
     }
+
+    @Test func storesCUDAKernelPlanMetadata() throws {
+        let cudaPlan = try TensorRTCUDAKernelPlan(
+            nativePlan: try .cudaPPO(),
+            engineCacheKey: "policy-engine",
+            rolloutBufferCount: 3
+        )
+        let tensorRTNativePlan = try NativeKernelPlan(
+            backend: .tensorRT,
+            operations: [.sampleActions],
+            precision: "fp16",
+            usesStaticMemory: true,
+            usesGraphCapture: true
+        )
+        let tensorRTPlan = try TensorRTCUDAKernelPlan(nativePlan: tensorRTNativePlan)
+
+        #expect(cudaPlan.nativePlan.backend == .cuda)
+        #expect(cudaPlan.engineCacheKey == "policy-engine")
+        #expect(cudaPlan.rolloutBufferCount == 3)
+        #expect(tensorRTPlan.nativePlan.backend == .tensorRT)
+
+        #expect(throws: RLSwiftError.emptyIdentifier(name: "cudaOrTensorRTBackend")) {
+            _ = try TensorRTCUDAKernelPlan(nativePlan: try .swiftReference())
+        }
+        #expect(throws: RLSwiftError.invalidCapacity(0)) {
+            _ = try TensorRTCUDAKernelPlan(nativePlan: try .cudaPPO(), rolloutBufferCount: 0)
+        }
+    }
 }
 
 private struct RecordingSnapshot: Equatable, Sendable {
@@ -411,6 +439,34 @@ private func floats(from value: TensorValue) throws -> [Float] {
         #expect(policy.metadata == ["engine": "mock"])
         #expect(policy.profileUsed == "fast")
         #expect(explicitSupport.explanation == "not available")
+    }
+
+    @Test func storesCUDAKernelPlanMetadata() throws {
+        let cudaPlan = try TensorRTCUDAKernelPlan(
+            nativePlan: try .cudaPPO(),
+            engineCacheKey: "policy-engine",
+            rolloutBufferCount: 3
+        )
+        let tensorRTNativePlan = try NativeKernelPlan(
+            backend: .tensorRT,
+            operations: [.sampleActions],
+            precision: "fp16",
+            usesStaticMemory: true,
+            usesGraphCapture: true
+        )
+        let tensorRTPlan = try TensorRTCUDAKernelPlan(nativePlan: tensorRTNativePlan)
+
+        #expect(cudaPlan.nativePlan.backend == .cuda)
+        #expect(cudaPlan.engineCacheKey == "policy-engine")
+        #expect(cudaPlan.rolloutBufferCount == 3)
+        #expect(tensorRTPlan.nativePlan.backend == .tensorRT)
+
+        #expect(throws: RLSwiftError.emptyIdentifier(name: "cudaOrTensorRTBackend")) {
+            _ = try TensorRTCUDAKernelPlan(nativePlan: try .swiftReference())
+        }
+        #expect(throws: RLSwiftError.invalidCapacity(0)) {
+            _ = try TensorRTCUDAKernelPlan(nativePlan: try .cudaPPO(), rolloutBufferCount: 0)
+        }
     }
 }
 #endif

@@ -26,6 +26,10 @@ On NVIDIA Linux builds, `TensorRTPolicyBackend` is compiled and can:
 - decode `Float32` policy outputs, and
 - convert continuous outputs into RLSwift robot actions.
 
+``TensorRTCUDAKernelPlan`` records CUDA/TensorRT-native execution metadata for
+deployment planners that overlap CPU rollout collection with GPU inference or
+cache TensorRT engines by profile.
+
 ```sh
 swift build --disable-default-traits --traits TensorRTBackend
 swift test --disable-default-traits --traits TensorRTBackend
@@ -53,6 +57,7 @@ macOS because TensorRT links `libnvinfer`, `libnvinfer_plugin`,
 ### Policy Configuration
 
 - ``TensorRTPolicyConfiguration``
+- ``TensorRTCUDAKernelPlan``
 - ``TensorRTInferenceOutput``
 - ``TensorRTPolicyOutput``
 

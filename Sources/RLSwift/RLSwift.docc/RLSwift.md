@@ -7,7 +7,10 @@ Build reinforcement learning agents in Swift with opt-in tensor backends.
 RLSwift provides a small, composable reinforcement learning core for Swift 6.3
 and newer. The package includes protocols for environments and agents,
 transition and episode accounting, deterministic replay memory, discrete
-policies, tabular Q-learning, and robot/autonomy support types.
+policies, tabular Q-learning, PPO objective utilities, built-in smoke-test
+environments, training-throughput instrumentation, sweep helpers, terminal
+visualization, multi-agent simulation protocols, and robot/autonomy support
+types.
 
 The core abstractions are generic over observation and action types so that
 simple tabular agents and backend-powered function approximators can share the
@@ -73,6 +76,15 @@ policy-version rollout behavior. Dependency-light descriptors cover ROS 2,
 simulator, WendyOS, vectorized rollout, ONNX export, TensorRT engine cache,
 curriculum, domain randomization, evaluation, and visual debugging workflows.
 
+## Training Workflows
+
+RLSwift includes PufferLib-inspired workflow building blocks for Swift training
+loops: ``ThroughputMeter`` records environment and sample throughput,
+``PPOAdvantageEstimator`` computes generalized advantage estimates,
+``PPOClippedObjective`` evaluates clipped PPO losses, ``SweepPlan`` builds
+deterministic hyperparameter grids, and ``TrainingDashboardSnapshot`` renders
+terminal-friendly metric summaries for CI or local runs.
+
 ## Topics
 
 ### Environment Loops
@@ -84,6 +96,26 @@ curriculum, domain randomization, evaluation, and visual debugging workflows.
 - ``Transition``
 - ``Episode``
 - ``ControlTiming``
+
+### Built-In Environments
+
+- ``BuiltInEnvironmentID``
+- ``EnvironmentCatalogEntry``
+- ``BuiltInEnvironmentCatalog``
+- ``LineWorldAction``
+- ``LineWorldObservation``
+- ``LineWorldEnvironment``
+- ``BinaryBanditAction``
+- ``BinaryBanditObservation``
+- ``BinaryBanditEnvironment``
+
+### Multi-Agent Simulation
+
+- ``MultiAgentEnvironment``
+- ``MultiAgentStepResult``
+- ``MatrixGameAction``
+- ``MatrixGameObservation``
+- ``MatrixGameEnvironment``
 
 ### Action Selection
 
@@ -159,6 +191,29 @@ curriculum, domain randomization, evaluation, and visual debugging workflows.
 - ``TabularQAgent``
 - ``ReplayBuffer``
 - ``PrioritizedReplayBuffer``
+- ``PPOConfiguration``
+- ``PPOTrajectoryStep``
+- ``PPOAdvantageBatch``
+- ``PPOAdvantageEstimator``
+- ``PPOClippedObjectiveSample``
+- ``PPOObjectiveBreakdown``
+- ``PPOClippedObjective``
+- ``TrainingThroughputReport``
+- ``ThroughputMeter``
+- ``NativeKernelBackend``
+- ``KernelFusionOperation``
+- ``NativeKernelPlan``
+
+### Sweeps and Visualization
+
+- ``SweepParameter``
+- ``SweepTrial``
+- ``SweepPlan``
+- ``SweepResult``
+- ``SweepTuner``
+- ``MetricSeriesPoint``
+- ``TrainingMetricSeries``
+- ``TrainingDashboardSnapshot``
 
 ### Errors
 

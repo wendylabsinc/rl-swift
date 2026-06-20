@@ -134,6 +134,35 @@ public struct TensorRTPolicyOutput: Equatable, Sendable {
     }
 }
 
+/// CUDA/TensorRT native-kernel plan for NVIDIA Linux execution.
+public struct TensorRTCUDAKernelPlan: Equatable, Sendable, Codable {
+    /// Shared native-kernel plan metadata.
+    public let nativePlan: NativeKernelPlan
+
+    /// TensorRT engine cache key associated with the plan, if an engine is available.
+    public let engineCacheKey: String?
+
+    /// Number of rollout buffers planned for overlapping CPU simulation and GPU inference.
+    public let rolloutBufferCount: Int
+
+    /// Creates a CUDA/TensorRT kernel plan.
+    public init(
+        nativePlan: NativeKernelPlan,
+        engineCacheKey: String? = nil,
+        rolloutBufferCount: Int = 1
+    ) throws {
+        guard nativePlan.backend == .cuda || nativePlan.backend == .tensorRT else {
+            throw RLSwiftError.emptyIdentifier(name: "cudaOrTensorRTBackend")
+        }
+        guard rolloutBufferCount > 0 else {
+            throw RLSwiftError.invalidCapacity(rolloutBufferCount)
+        }
+        self.nativePlan = nativePlan
+        self.engineCacheKey = engineCacheKey
+        self.rolloutBufferCount = rolloutBufferCount
+    }
+}
+
 /// Runtime support information for the RLSwift TensorRT backend on the current platform.
 public struct TensorRTBackendSupport: Equatable, Sendable {
     /// Whether the native TensorRT-backed policy actor is available in this build.

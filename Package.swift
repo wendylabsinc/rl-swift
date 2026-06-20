@@ -24,6 +24,10 @@ let package = Package(
             name: "RLSwiftTensorRT",
             targets: ["RLSwiftTensorRT"]
         ),
+        .executable(
+            name: "rl-swift",
+            targets: ["RLSwiftCLI"]
+        ),
     ],
     traits: [
         .default(enabledTraits: ["MLXBackend"]),
@@ -79,6 +83,15 @@ let package = Package(
             ],
             swiftSettings: [
                 .define("SWIFTRL_ENABLE_TENSORRT", .when(platforms: [.linux], traits: ["TensorRTBackend"])),
+                .enableUpcomingFeature("ExistentialAny"),
+                .enableUpcomingFeature("InternalImportsByDefault"),
+                .enableUpcomingFeature("MemberImportVisibility"),
+            ]
+        ),
+        .executableTarget(
+            name: "RLSwiftCLI",
+            dependencies: ["RLSwift"],
+            swiftSettings: [
                 .enableUpcomingFeature("ExistentialAny"),
                 .enableUpcomingFeature("InternalImportsByDefault"),
                 .enableUpcomingFeature("MemberImportVisibility"),
