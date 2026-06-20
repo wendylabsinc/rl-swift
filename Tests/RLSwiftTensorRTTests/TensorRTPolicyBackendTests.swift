@@ -140,12 +140,12 @@ import TensorRT
 
     @Test func rejectsMissingDynamicInputShapeAndInputCountMismatch() async throws {
         let dynamicBackend = try makeBackend(inputShape: [-1, 3], outputShape: [1])
-        #expect(throws: TensorRTBackendError.dynamicInputRequiresShape(binding: "observation")) {
+        await #expect(throws: TensorRTBackendError.dynamicInputRequiresShape(binding: "observation")) {
             _ = try await dynamicBackend.inferenceBatch(for: [1, 2, 3])
         }
 
         let staticBackend = try makeBackend(inputShape: [1, 3], outputShape: [1])
-        #expect(throws: TensorRTBackendError.tensorElementCountMismatch(binding: "observation", expected: 3, actual: 2)) {
+        await #expect(throws: TensorRTBackendError.tensorElementCountMismatch(binding: "observation", expected: 3, actual: 2)) {
             _ = try await staticBackend.inferenceBatch(for: [1, 2])
         }
     }
@@ -154,7 +154,7 @@ import TensorRT
         let missingOutputBackend = try makeBackend(context: RecordingExecutionContext { _ in
             InferenceResult(outputs: [:])
         })
-        #expect(throws: TensorRTBackendError.missingOutput(name: "action")) {
+        await #expect(throws: TensorRTBackendError.missingOutput(name: "action")) {
             _ = try await missingOutputBackend.inference(for: [1])
         }
 
@@ -166,7 +166,7 @@ import TensorRT
                 ),
             ])
         })
-        #expect(throws: TensorRTBackendError.unsupportedOutputStorage(binding: "action")) {
+        await #expect(throws: TensorRTBackendError.unsupportedOutputStorage(binding: "action")) {
             _ = try await deviceOutputBackend.inference(for: [1])
         }
 
@@ -175,7 +175,7 @@ import TensorRT
                 "action": TensorValue(descriptor: descriptor("action", [1]), storage: .host(Data([1, 2, 3]))),
             ])
         })
-        #expect(throws: TensorRTBackendError.invalidOutputByteCount(binding: "action", actual: 3)) {
+        await #expect(throws: TensorRTBackendError.invalidOutputByteCount(binding: "action", actual: 3)) {
             _ = try await badBytesBackend.inference(for: [1])
         }
     }
@@ -189,7 +189,7 @@ import TensorRT
                 ),
             ])
         })
-        #expect(throws: TensorRTBackendError.unsupportedDataType(binding: "action", dataType: "int32")) {
+        await #expect(throws: TensorRTBackendError.unsupportedDataType(binding: "action", dataType: "int32")) {
             _ = try await wrongTypeBackend.inference(for: [1])
         }
 
@@ -201,7 +201,7 @@ import TensorRT
             },
             configuredOutputShape: [3]
         )
-        #expect(throws: TensorRTBackendError.tensorElementCountMismatch(binding: "action", expected: 3, actual: 2)) {
+        await #expect(throws: TensorRTBackendError.tensorElementCountMismatch(binding: "action", expected: 3, actual: 2)) {
             _ = try await wrongCountBackend.inference(for: [1])
         }
     }
@@ -378,7 +378,7 @@ private func floats(from value: TensorValue) throws -> [Float] {
         return []
     }
     var values = [Float](repeating: 0, count: data.count / MemoryLayout<Float>.stride)
-    values.withUnsafeMutableBufferPointer { buffer in
+    _ = values.withUnsafeMutableBufferPointer { buffer in
         data.copyBytes(to: UnsafeMutableRawBufferPointer(buffer))
     }
     return values

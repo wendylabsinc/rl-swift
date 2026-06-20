@@ -473,7 +473,7 @@ public actor TensorRTPolicyBackend {
         }
 
         var values = [Float](repeating: 0, count: data.count / MemoryLayout<Float>.stride)
-        values.withUnsafeMutableBufferPointer { buffer in
+        _ = values.withUnsafeMutableBufferPointer { buffer in
             data.copyBytes(to: UnsafeMutableRawBufferPointer(buffer))
         }
         return values
