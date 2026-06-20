@@ -20,7 +20,7 @@ jobs:
       - name: Install Swift
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: "6.3.2"
+          swift-version: "6.3"
 
       - name: Run Swift package tests
         run: swift test --parallel
@@ -35,7 +35,7 @@ jobs:
       - name: Install Swift
         uses: swift-actions/setup-swift@v2
         with:
-          swift-version: "6.3.2"
+          swift-version: "6.3"
 
       - name: Run core-only tests
         run: |
