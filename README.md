@@ -1,5 +1,10 @@
 # RLSwift
 
+[![E2E Integration Tests](https://github.com/wendylabsinc/rl-swift/actions/workflows/e2e-integration.yml/badge.svg)](https://github.com/wendylabsinc/rl-swift/actions/workflows/e2e-integration.yml)
+![Swift 6.3+](https://img.shields.io/badge/Swift-6.3%2B-orange)
+![Apple Platforms](https://img.shields.io/badge/Apple-macOS%2014%20%7C%20iOS%2017%20%7C%20iPadOS%2017%20%7C%20tvOS%2017%20%7C%20visionOS%201-blue)
+![Linux](https://img.shields.io/badge/Linux-Ubuntu%2024.04%20%7C%20NVIDIA%20TensorRT-green)
+
 RLSwift is a Swift 6.3+ reinforcement learning package with opt-in MLX and
 TensorRT backends for Apple and NVIDIA Linux deployments.
 
