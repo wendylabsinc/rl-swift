@@ -100,10 +100,10 @@ cd Examples/RobotGridWorld
 swift run robot-grid-world
 ```
 
-## Robot and Autonomy Gap Analysis
+## Robot and Autonomy Features
 
-Robots and autonomous systems need more than a basic reward/action loop. The
-critical missing features are the pieces that keep data trustworthy and execution
+RLSwift includes robot and autonomous-system support beyond a basic
+reward/action loop. These features keep rollout data trustworthy and execution
 bounded when a learned policy is connected to hardware:
 
 - Episode endings must distinguish natural task termination, time-limit
@@ -125,18 +125,18 @@ bounded when a learned policy is connected to hardware:
   scarce safety, collision, timeout, or recovery events to be sampled more often
   than ordinary transitions.
 
-| Priority | Robot or autonomy gap | RLSwift API surface |
+| Feature area | Capability | RLSwift API surface |
 | --- | --- | --- |
-| Need-to-have | Versioned model IO contracts that pin observation order, normalization state, action units, TensorRT binding names, and policy metadata. | `ModelIOContract`, `ObservationFeature`, `NormalizationSnapshot`, `ActionSpecification`, `TensorRTBindingNames`, `PolicyMetadata` |
-| Need-to-have | Hardware-facing safety supervisors outside the learned policy for watchdog checks, emergency stops, sensor freshness, actuator envelopes, and command-rate limits. | `HardwareSafetySupervisor`, `SafetySupervisorInput`, `SafetySupervisorDecision`, `EmergencyStopState` |
-| Need-to-have | Durable offline data pipelines with manifests, provenance, timestamps, termination causes, constraint costs, and replayable safety interventions. | `OfflineDataset`, `LoggedTransition`, `DatasetManifest`, `DatasetProvenance` |
-| Need-to-have | Deterministic deployment backend selection for MLX on Apple devices, TensorRT on NVIDIA Linux, and core Swift fallback deployments. | `DeploymentTarget`, `DeploymentPlan`, `DeploymentBackend` |
-| Need-to-have | Real-time observability for latency, deadline misses, intervention counts, constraint costs, and policy-version rollout decisions. | `AutonomyTelemetryAccumulator`, `AutonomyTelemetrySummary`, `PolicyVersionRollout` |
-| Nice-to-have | Dependency-light ROS 2, simulator, and WendyOS adapter descriptors. | `RobotIntegrationAdapterConfiguration` |
-| Nice-to-have | Vectorized environments and distributed rollout collection. | `VectorizedEnvironmentRunner`, `RolloutShardAssignment` |
-| Nice-to-have | ONNX export descriptors and TensorRT engine cache metadata. | `ONNXExportDescriptor`, `TensorRTEngineCacheKey`, `TensorRTEngineCacheManifest` |
-| Nice-to-have | Curriculum learning, domain randomization, and evaluation dashboard summaries. | `CurriculumStage`, `CurriculumSchedule`, `DomainRandomizationParameter`, `DomainRandomizationProfile`, `EvaluationRecord`, `EvaluationDashboardSummary` |
-| Nice-to-have | Visual debugging inputs for observation drift, action saturation, and rare prioritized replay events. | `ObservationDriftSnapshot`, `ActionSaturationSnapshot`, `PrioritizedReplayDebugSnapshot` |
+| Model IO contracts | Versioned observation order, normalization state, action units, TensorRT binding names, and policy metadata. | `ModelIOContract`, `ObservationFeature`, `NormalizationSnapshot`, `ActionSpecification`, `TensorRTBindingNames`, `PolicyMetadata` |
+| Safety supervision | Hardware-facing watchdog checks, emergency stops, sensor freshness, actuator envelopes, and command-rate limits outside the learned policy. | `HardwareSafetySupervisor`, `SafetySupervisorInput`, `SafetySupervisorDecision`, `EmergencyStopState` |
+| Offline datasets | Durable manifests, provenance, timestamps, termination causes, constraint costs, and replayable safety interventions. | `OfflineDataset`, `LoggedTransition`, `DatasetManifest`, `DatasetProvenance` |
+| Deployment planning | Deterministic backend selection for MLX on Apple devices, TensorRT on NVIDIA Linux, and core Swift fallback deployments. | `DeploymentTarget`, `DeploymentPlan`, `DeploymentBackend` |
+| Observability | Real-time summaries for latency, deadline misses, intervention counts, constraint costs, and policy-version rollout decisions. | `AutonomyTelemetryAccumulator`, `AutonomyTelemetrySummary`, `PolicyVersionRollout` |
+| Robot adapters | Dependency-light ROS 2, simulator, and WendyOS adapter descriptors. | `RobotIntegrationAdapterConfiguration` |
+| Rollout collection | Vectorized environments and distributed rollout sharding. | `VectorizedEnvironmentRunner`, `RolloutShardAssignment` |
+| Export and engine cache | ONNX export descriptors and TensorRT engine cache metadata. | `ONNXExportDescriptor`, `TensorRTEngineCacheKey`, `TensorRTEngineCacheManifest` |
+| Training workflows | Curriculum learning, domain randomization, and evaluation dashboard summaries. | `CurriculumStage`, `CurriculumSchedule`, `DomainRandomizationParameter`, `DomainRandomizationProfile`, `EvaluationRecord`, `EvaluationDashboardSummary` |
+| Visual debugging | Observation drift, action saturation, and rare prioritized replay event snapshots. | `ObservationDriftSnapshot`, `ActionSaturationSnapshot`, `PrioritizedReplayDebugSnapshot` |
 
 ## Package Surface
 

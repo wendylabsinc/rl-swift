@@ -35,10 +35,10 @@ the learned policy in addition to using ``RobotSafetyEnvelope``, because mobile
 OS scheduling, thermal throttling, sensor latency, and wireless transport can
 affect closed-loop robot behavior.
 
-## Robot and Autonomy Gap Analysis
+## Robot and Autonomy Features
 
 Robots and autonomous systems need explicit support for safety, timing, and
-logged-data quality. RLSwift covers the most important gaps in the core package:
+logged-data quality. RLSwift includes those features in the core package:
 
 - Episode-ending semantics are represented by ``StepTermination`` so algorithms
   can distinguish task termination from time-limit truncation and supervisory
@@ -54,11 +54,11 @@ logged-data quality. RLSwift covers the most important gaps in the core package:
 - ``PrioritizedReplayBuffer`` lets rare but important autonomy events be sampled
   more often than ordinary transitions.
 
-The package also includes concrete autonomy infrastructure for the gaps that
-usually appear when policies leave toy environments: ``ModelIOContract`` pins
-model input/output order and deployment metadata; ``HardwareSafetySupervisor``
-keeps emergency-stop, freshness, deadline, and envelope checks outside the
-policy; ``OfflineDataset`` stores replayable logged data with provenance; and
+The package also includes concrete autonomy infrastructure for production-style
+policy workflows: ``ModelIOContract`` pins model input/output order and
+deployment metadata; ``HardwareSafetySupervisor`` keeps emergency-stop,
+freshness, deadline, and envelope checks outside the policy; ``OfflineDataset``
+stores replayable logged data with provenance; and
 ``AutonomyTelemetryAccumulator`` summarizes latency, safety, constraints, and
 policy-version rollout behavior. Dependency-light descriptors cover ROS 2,
 simulator, WendyOS, vectorized rollout, ONNX export, TensorRT engine cache,
