@@ -26,9 +26,13 @@ On NVIDIA Linux builds, `TensorRTPolicyBackend` is compiled and can:
 - decode `Float32` policy outputs, and
 - convert continuous outputs into RLSwift robot actions.
 
+`TensorRTCUDAKernelExecutor` adds native CUDA kernels for performance-critical
+training support on NVIDIA Linux. It dynamically loads the CUDA Driver API and
+NVRTC, compiles kernels for the visible GPU, and currently accelerates
+batched LineWorld rollout stepping plus fused clipped-PPO objective reduction.
 ``TensorRTCUDAKernelPlan`` records CUDA/TensorRT-native execution metadata for
-deployment planners that overlap CPU rollout collection with GPU inference or
-cache TensorRT engines by profile.
+deployment planners that overlap rollout collection with GPU inference or cache
+TensorRT engines by profile.
 
 ```sh
 swift build --disable-default-traits --traits TensorRTBackend
@@ -38,10 +42,13 @@ swift test --disable-default-traits --traits TensorRTBackend
 ## Deployment Split
 
 TensorRT is possible for this library, but it should be treated as a deployment
-backend rather than a replacement for the Apple MLX path. A practical robot stack
-can train or fine-tune with MLX on Apple hardware, export a model to ONNX, build
-a TensorRT engine on an NVIDIA Linux machine, and run the resulting policy
-through RLSwiftTensorRT for low-latency inference.
+backend rather than an autograd training framework. A practical robot stack can
+train or fine-tune with RLSwift, MLX on Apple hardware, or another training
+system, export a model to ONNX, build a TensorRT engine on an NVIDIA Linux
+machine, and run the resulting policy through RLSwiftTensorRT for low-latency
+inference. CUDA kernels in this target accelerate rollout/objective pieces near
+the TensorRT deployment path; TensorRT itself remains the optimized inference
+runtime.
 
 The native backend requires Linux with CUDA and TensorRT installed. A DGX Spark,
 DGX workstation, Jetson-class device, or NVIDIA Linux host is a better fit than

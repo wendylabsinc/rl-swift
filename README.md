@@ -24,9 +24,14 @@ swift test
 ./scripts/check-coverage.sh
 swift run rl-swift catalog
 swift run rl-swift train --episodes 24
+swift run rl-swift eval --episodes 4
+swift run rl-swift experiment
+swift run rl-swift checkpoint
 swift run rl-swift sweep
+swift run rl-swift protein
 swift run rl-swift visualize
 (cd Examples/RobotGridWorld && swift run robot-grid-world)
+(cd Examples/VectorizedPPO && swift run vectorized-ppo --iterations 2 --envs 4 --rollout 3)
 swift package generate-documentation --target RLSwift
 swift package generate-documentation --target RLSwiftMLX
 swift package generate-documentation --target RLSwiftTensorRT
@@ -40,7 +45,11 @@ logs:
 ```sh
 swift run rl-swift catalog
 swift run rl-swift train --episodes 24
+swift run rl-swift eval --episodes 4
+swift run rl-swift experiment
+swift run rl-swift checkpoint
 swift run rl-swift sweep
+swift run rl-swift protein
 swift run rl-swift visualize
 ```
 
@@ -56,13 +65,19 @@ drop-in replacement.
 | PufferLib capability | RLSwift status | API or command |
 | --- | --- | --- |
 | Training throughput reporting | Implemented as backend-agnostic counters and rates. | `ThroughputMeter`, `TrainingThroughputReport` |
-| PPO learner math | Implemented for GAE and clipped PPO objective evaluation; neural optimizer integration remains backend-specific. | `PPOConfiguration`, `PPOAdvantageEstimator`, `PPOClippedObjective` |
-| CUDA-native execution | Planned and described for CUDA/TensorRT, with TensorRT Linux backend integration; custom fused CUDA kernels are still a future backend layer. | `NativeKernelPlan`, `TensorRTCUDAKernelPlan`, `RLSwiftTensorRT` |
+| PPO learner math | Implemented for GAE, clipped PPO objective evaluation, value clipping, categorical/multidiscrete/continuous action log-probability math, coefficient annealing, gradient clipping, prioritized trajectory segments, and a deterministic neural actor-critic PPO optimizer loop. | `PPOConfiguration`, `PPOAnnealingSchedule`, `PPOActionDistribution`, `PPOGradientClipper`, `PPOTrajectorySegmentSampler`, `PPOAdvantageEstimator`, `PPOClippedObjective`, `NeuralPPOTrainer`, `DenseDiscreteActorCriticModel` |
+| Structured spaces | Implemented for flattening and unflattening named observation/action fields in model order. | `StructuredTensorSchema`, `StructuredObservationSchema`, `StructuredActionSchema` |
+| Vectorized rollout profiles | Implemented as serial/threaded/multiprocessing/CUDA/TensorRT metadata, the sequential runner, and an in-process async Swift actor runner. | `VectorizationProfile`, `VectorizedEnvironmentRunner`, `AsyncVectorizedEnvironmentRunner`, `AsyncEnvironmentWorker` |
+| Checkpoint bookkeeping | Implemented as policy/checkpoint manifests with metrics and vectorization provenance. | `PolicyMetadata`, `PolicyCheckpointManifest` |
+| Self-play pools | Implemented as bounded frozen-opponent metadata with deterministic sampling and Elo-style updates. | `SelfPlayOpponentPool`, `SelfPlayOpponent`, `SelfPlayRatingUpdate` |
+| CUDA-native execution | Implemented for TensorRT trait builds on Linux with native CUDA kernels for batched LineWorld stepping and fused PPO objective evaluation. | `NativeKernelPlan`, `TensorRTCUDAKernelExecutor`, `TensorRTCUDAKernelPlan`, `RLSwiftTensorRT` |
 | Built-in environments | Implemented as a small deterministic suite for smoke tests and examples. | `BuiltInEnvironmentCatalog`, `LineWorldEnvironment`, `BinaryBanditEnvironment`, `MatrixGameEnvironment` |
-| CLI workflow | Implemented for catalog, train, sweep, and visualization commands. | `swift run rl-swift ...` |
-| Sweeps and tuning | Implemented deterministic grid sweeps and Pareto frontier selection. | `SweepPlan`, `SweepTuner` |
+| CLI workflow | Implemented for catalog, train, eval, experiment config, checkpoint manifest, sweep, Protein-style tuning, and visualization commands. | `swift run rl-swift ...` |
+| Sweeps and tuning | Implemented deterministic grid sweeps, Pareto frontier selection, and a pure Swift Protein-style bounded tuner. | `SweepPlan`, `SweepTuner`, `ProteinTuner` |
 | Visualization | Implemented lightweight terminal dashboards and sparklines for logs. | `TrainingMetricSeries`, `TrainingDashboardSnapshot` |
 | Multi-agent simulation | Implemented protocol and matrix-game environment for game-scale API coverage. | `MultiAgentEnvironment`, `MatrixGameEnvironment` |
+| Recurrent/entity encoders | Recurrent state and a MinGRU actor-critic reference model are implemented; PufferLib-style entity encoders remain a future model-family expansion. | `RecurrentPolicyValueModel`, `MinGRUCell`, `MinGRUState`, `MinGRUDiscreteActorCriticModel` |
+| Distributed async rollout workers | In-process async rollout workers are implemented with Swift actors; multiprocess or remote worker orchestration remains a future distributed runtime layer. | `AsyncVectorizedEnvironmentRunner`, `AsyncVectorizedStepBatch` |
 
 ## Swift 6.3 Performance Notes
 
@@ -147,13 +162,23 @@ outputs, and convert them into `RobotAction` values.
 
 ## Examples
 
-Runnable example projects live in `Examples/`. Start with `RobotGridWorld`,
-which trains a tabular Q-learning policy in a deterministic navigation task and
-exercises the robot/autonomy API surface around the loop:
+Runnable example projects live in `Examples/`.
+
+`RobotGridWorld` trains a tabular Q-learning policy in a deterministic
+navigation task and exercises the robot/autonomy API surface around the loop:
 
 ```sh
 cd Examples/RobotGridWorld
 swift run robot-grid-world
+```
+
+`VectorizedPPO` runs a Puffer-style collect/update loop with structured
+observations, vectorized LineWorld environments, neural PPO, throughput metrics,
+dashboard output, and checkpoint metadata:
+
+```sh
+cd Examples/VectorizedPPO
+swift run vectorized-ppo --iterations 2 --envs 4 --rollout 3
 ```
 
 ## Robot and Autonomy Features
@@ -189,9 +214,9 @@ bounded when a learned policy is connected to hardware:
 | Deployment planning | Deterministic backend selection for MLX on Apple devices, TensorRT on NVIDIA Linux, and core Swift fallback deployments. | `DeploymentTarget`, `DeploymentPlan`, `DeploymentBackend` |
 | Observability | Real-time summaries for latency, deadline misses, intervention counts, constraint costs, and policy-version rollout decisions. | `AutonomyTelemetryAccumulator`, `AutonomyTelemetrySummary`, `PolicyVersionRollout` |
 | Robot adapters | Dependency-light ROS 2, simulator, and WendyOS adapter descriptors. | `RobotIntegrationAdapterConfiguration` |
-| Rollout collection | Vectorized environments and distributed rollout sharding. | `VectorizedEnvironmentRunner`, `RolloutShardAssignment` |
+| Rollout collection | Vectorized environments, vectorization profiles, structured flattened spaces, and distributed rollout sharding. | `VectorizedEnvironmentRunner`, `VectorizationProfile`, `StructuredObservationSchema`, `StructuredActionSchema`, `RolloutShardAssignment` |
 | Export and engine cache | ONNX export descriptors and TensorRT engine cache metadata. | `ONNXExportDescriptor`, `TensorRTEngineCacheKey`, `TensorRTEngineCacheManifest` |
-| Training workflows | Curriculum learning, domain randomization, and evaluation dashboard summaries. | `CurriculumStage`, `CurriculumSchedule`, `DomainRandomizationParameter`, `DomainRandomizationProfile`, `EvaluationRecord`, `EvaluationDashboardSummary` |
+| Training workflows | Curriculum learning, domain randomization, evaluation dashboards, checkpoint manifests, and self-play opponent pools. | `CurriculumStage`, `CurriculumSchedule`, `DomainRandomizationParameter`, `DomainRandomizationProfile`, `EvaluationRecord`, `EvaluationDashboardSummary`, `PolicyCheckpointManifest`, `SelfPlayOpponentPool` |
 | Visual debugging | Observation drift, action saturation, and rare prioritized replay event snapshots. | `ObservationDriftSnapshot`, `ActionSaturationSnapshot`, `PrioritizedReplayDebugSnapshot` |
 
 ## Package Surface
@@ -211,12 +236,20 @@ bounded when a learned policy is connected to hardware:
   deployment and observability.
 - Adapter, vectorized rollout, export/cache, curriculum, evaluation, and visual
   debug descriptors for autonomy workflows.
+- Structured observation/action schemas, vectorization profiles, checkpoint
+  manifests, async vectorized environment workers, and self-play opponent pools
+  for Puffer-style training workflows.
 - Built-in smoke-test environments with catalog metadata.
-- PPO advantage estimation and clipped objective evaluation.
+- PPO advantage estimation, clipped objective evaluation, action-distribution
+  scoring, schedule/gradient clipping helpers, prioritized trajectory segments,
+  recurrent MinGRU policy/value APIs, and a deterministic neural actor-critic
+  PPO optimizer loop.
+- Experiment configuration, checkpoint records, and built-in evaluation
+  summaries for CLI and CI workflows.
 - Throughput metering for rollout collection and training loops.
 - Native kernel planning metadata for Swift CPU, MLX, CUDA, and TensorRT paths.
-- Deterministic sweep plans, Pareto frontier tuning, text dashboards, and the
-  `rl-swift` CLI.
+- Deterministic sweep plans, Pareto frontier tuning, Protein-style suggestions,
+  text dashboards, and the `rl-swift` CLI.
 - Multi-agent environment protocols and a matrix-game environment.
 - `ActionSmoother` for low-pass command filtering.
 - `ConstraintSignal` and `ConstraintReport` for constrained robot learning.

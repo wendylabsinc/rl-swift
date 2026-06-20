@@ -7,10 +7,11 @@ Build reinforcement learning agents in Swift with opt-in tensor backends.
 RLSwift provides a small, composable reinforcement learning core for Swift 6.3
 and newer. The package includes protocols for environments and agents,
 transition and episode accounting, deterministic replay memory, discrete
-policies, tabular Q-learning, PPO objective utilities, built-in smoke-test
-environments, training-throughput instrumentation, sweep helpers, terminal
-visualization, multi-agent simulation protocols, and robot/autonomy support
-types.
+policies, tabular Q-learning, PPO objective utilities, asynchronous vectorized
+environment workers, recurrent MinGRU policy/value APIs, a deterministic neural
+PPO optimizer loop, built-in smoke-test environments, training-throughput
+instrumentation, sweep helpers, Protein-style tuning, terminal visualization,
+multi-agent simulation protocols, and robot/autonomy support types.
 
 The core abstractions are generic over observation and action types so that
 simple tabular agents and backend-powered function approximators can share the
@@ -81,9 +82,21 @@ curriculum, domain randomization, evaluation, and visual debugging workflows.
 RLSwift includes PufferLib-inspired workflow building blocks for Swift training
 loops: ``ThroughputMeter`` records environment and sample throughput,
 ``PPOAdvantageEstimator`` computes generalized advantage estimates,
-``PPOClippedObjective`` evaluates clipped PPO losses, ``SweepPlan`` builds
-deterministic hyperparameter grids, and ``TrainingDashboardSnapshot`` renders
-terminal-friendly metric summaries for CI or local runs.
+``PPOClippedObjective`` evaluates clipped PPO losses,
+``NeuralPPOTrainer`` runs minibatch PPO epochs over trainable actor-critic
+models, ``DenseDiscreteActorCriticModel`` provides a compact reference neural
+policy/value implementation, ``StructuredObservationSchema`` and
+``StructuredActionSchema`` flatten named spaces for model inputs and outputs,
+``VectorizationProfile`` records rollout execution shape,
+``AsyncVectorizedEnvironmentRunner`` provides in-process Swift actor workers,
+``PolicyCheckpointManifest`` captures checkpoint provenance,
+``SelfPlayOpponentPool`` tracks frozen opponents for self-play curricula,
+``MinGRUCell`` provides a recurrent reference cell,
+``ExperimentConfiguration`` and ``EvaluationSummary`` capture CLI-friendly run
+records, ``SweepPlan`` builds deterministic hyperparameter grids,
+``ProteinTuner`` suggests bounded hyperparameters, and
+``TrainingDashboardSnapshot`` renders terminal-friendly metric summaries for CI
+or local runs.
 
 ## Topics
 
@@ -172,6 +185,16 @@ terminal-friendly metric summaries for CI or local runs.
 - ``RobotIntegrationAdapterConfiguration``
 - ``VectorizedEnvironmentRunner``
 - ``VectorizedStepResult``
+- ``AsyncEnvironmentWorker``
+- ``AsyncVectorizedEnvironmentRunner``
+- ``AsyncVectorizedStepBatch``
+- ``VectorizedEnvironmentStep``
+- ``StructuredTensorField``
+- ``StructuredTensorSchema``
+- ``StructuredObservationSchema``
+- ``StructuredActionSchema``
+- ``VectorizationBackend``
+- ``VectorizationProfile``
 - ``RolloutShardAssignment``
 - ``ONNXExportDescriptor``
 - ``TensorRTEngineCacheKey``
@@ -192,12 +215,40 @@ terminal-friendly metric summaries for CI or local runs.
 - ``ReplayBuffer``
 - ``PrioritizedReplayBuffer``
 - ``PPOConfiguration``
+- ``PPOAnnealingSchedule``
+- ``PPOAction``
+- ``PPOActionDistribution``
+- ``PPOGradientClipSummary``
+- ``PPOClippedGradientVector``
+- ``PPOGradientClipper``
 - ``PPOTrajectoryStep``
+- ``PPOTrajectorySegment``
+- ``PPOTrajectorySegmentSampler``
 - ``PPOAdvantageBatch``
 - ``PPOAdvantageEstimator``
 - ``PPOClippedObjectiveSample``
 - ``PPOObjectiveBreakdown``
 - ``PPOClippedObjective``
+- ``PPOTrainingSample``
+- ``PPOPolicyValuePrediction``
+- ``PPOPolicyValueModel``
+- ``PPOOptimizerStepSummary``
+- ``PPOTrainingSummary``
+- ``NeuralPPOTrainer``
+- ``DenseDiscreteActorCriticModel``
+- ``RecurrentPolicyValuePrediction``
+- ``RecurrentPolicyValueModel``
+- ``MinGRUState``
+- ``MinGRUCell``
+- ``MinGRUDiscreteActorCriticModel``
+- ``ExperimentConfiguration``
+- ``ExperimentCheckpointRecord``
+- ``EvaluationSummary``
+- ``ExperimentEvaluator``
+- ``PolicyCheckpointManifest``
+- ``SelfPlayOpponent``
+- ``SelfPlayRatingUpdate``
+- ``SelfPlayOpponentPool``
 - ``TrainingThroughputReport``
 - ``ThroughputMeter``
 - ``NativeKernelBackend``
@@ -211,6 +262,11 @@ terminal-friendly metric summaries for CI or local runs.
 - ``SweepPlan``
 - ``SweepResult``
 - ``SweepTuner``
+- ``ProteinParameterScale``
+- ``ProteinParameter``
+- ``ProteinSuggestion``
+- ``ProteinObservation``
+- ``ProteinTuner``
 - ``MetricSeriesPoint``
 - ``TrainingMetricSeries``
 - ``TrainingDashboardSnapshot``

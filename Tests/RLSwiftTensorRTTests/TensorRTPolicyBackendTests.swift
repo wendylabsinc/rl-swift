@@ -273,6 +273,145 @@ import TensorRT
             _ = try TensorRTCUDAKernelPlan(nativePlan: try .cudaPPO(), rolloutBufferCount: 0)
         }
     }
+
+    @Test func nativeCUDAKernelsReportRuntimeStatus() {
+        let status = TensorRTCUDAKernelExecutor.runtimeStatus()
+
+        #expect(!status.message.isEmpty)
+    }
+
+    @Test func nativeCUDAKernelsMatchSwiftReferenceWhenAvailable() throws {
+        let status = TensorRTCUDAKernelExecutor.runtimeStatus()
+        let requiresCUDA = ProcessInfo.processInfo.environment["SWIFTRL_REQUIRE_CUDA_KERNELS"] == "1"
+        if requiresCUDA {
+            #expect(status.isAvailable)
+        }
+        guard status.isAvailable else {
+            #expect(status.message.contains("Unable") || status.message.contains("failed") || !status.message.isEmpty)
+            return
+        }
+
+        var positions: [Int32] = [0, 1, 3]
+        var stepIndices: [Int32] = [0, 1, 3]
+        let lineWorld = try TensorRTCUDAKernelExecutor.stepLineWorld(
+            actions: [.right, .left, .right],
+            positions: &positions,
+            stepIndices: &stepIndices,
+            length: 4,
+            maxSteps: 4
+        )
+        #expect(positions == [1, 0, 3])
+        #expect(stepIndices == [1, 2, 4])
+        #expect(lineWorld.observations == [
+            LineWorldObservation(position: 1, goal: 3, stepIndex: 1),
+            LineWorldObservation(position: 0, goal: 3, stepIndex: 2),
+            LineWorldObservation(position: 3, goal: 3, stepIndex: 4),
+        ])
+        #expect(lineWorld.terminalFlags == [false, false, true])
+        #expect(lineWorld.terminations == [.continuing, .continuing, .terminated(reason: "goal")])
+        #expect(lineWorld.rewards.map(round4) == [-0.01, -0.01, 1])
+
+        let configuration = try PPOConfiguration(
+            clipRange: 0.2,
+            valueLossCoefficient: 0.5,
+            entropyCoefficient: 0.01
+        )
+        let samples = [
+            PPOClippedObjectiveSample(
+                oldLogProbability: 0,
+                newLogProbability: log(1.5),
+                advantage: 2,
+                returnEstimate: 3,
+                valueEstimate: 1,
+                entropy: 0.1
+            ),
+            PPOClippedObjectiveSample(
+                oldLogProbability: 0,
+                newLogProbability: log(0.9),
+                advantage: -1,
+                returnEstimate: 0,
+                valueEstimate: 1,
+                entropy: 0.3
+            ),
+            PPOClippedObjectiveSample(
+                oldLogProbability: -0.2,
+                newLogProbability: -0.25,
+                advantage: 0.5,
+                returnEstimate: 0.75,
+                valueEstimate: 0.25,
+                entropy: 0.2
+            ),
+        ]
+        let swift = try PPOClippedObjective.evaluate(samples: samples, configuration: configuration)
+        let cuda = try TensorRTCUDAKernelExecutor.ppoObjective(samples: samples, configuration: configuration)
+        #expect(round4(cuda.policyLoss) == round4(swift.policyLoss))
+        #expect(round4(cuda.valueLoss) == round4(swift.valueLoss))
+        #expect(round4(cuda.entropyBonus) == round4(swift.entropyBonus))
+        #expect(round4(cuda.totalLoss) == round4(swift.totalLoss))
+        #expect(round4(cuda.meanApproximateKL) == round4(swift.meanApproximateKL))
+        #expect(round4(cuda.clippedFraction) == round4(swift.clippedFraction))
+    }
+
+    @Test func nativeCUDAKernelValidationBranchesAreCoveredWhenRuntimeIsUnavailableOrInvalid() throws {
+        #expect(throws: RLSwiftError.invalidSampleCount(0)) {
+            var positions: [Int32] = []
+            var steps: [Int32] = []
+            _ = try TensorRTCUDAKernelExecutor.stepLineWorld(
+                actions: [],
+                positions: &positions,
+                stepIndices: &steps,
+                length: 4,
+                maxSteps: 4
+            )
+        }
+        #expect(throws: RLSwiftError.dimensionMismatch(expected: 1, actual: 0)) {
+            var positions: [Int32] = []
+            var steps: [Int32] = [0]
+            _ = try TensorRTCUDAKernelExecutor.stepLineWorld(
+                actions: [.right],
+                positions: &positions,
+                stepIndices: &steps,
+                length: 4,
+                maxSteps: 4
+            )
+        }
+        #expect(throws: RLSwiftError.dimensionMismatch(expected: 1, actual: 0)) {
+            var positions: [Int32] = [0]
+            var steps: [Int32] = []
+            _ = try TensorRTCUDAKernelExecutor.stepLineWorld(
+                actions: [.right],
+                positions: &positions,
+                stepIndices: &steps,
+                length: 4,
+                maxSteps: 4
+            )
+        }
+        #expect(throws: RLSwiftError.invalidCapacity(1)) {
+            var positions: [Int32] = [0]
+            var steps: [Int32] = [0]
+            _ = try TensorRTCUDAKernelExecutor.stepLineWorld(
+                actions: [.right],
+                positions: &positions,
+                stepIndices: &steps,
+                length: 1,
+                maxSteps: 4
+            )
+        }
+        #expect(throws: RLSwiftError.invalidHorizon(0)) {
+            var positions: [Int32] = [0]
+            var steps: [Int32] = [0]
+            _ = try TensorRTCUDAKernelExecutor.stepLineWorld(
+                actions: [.right],
+                positions: &positions,
+                stepIndices: &steps,
+                length: 4,
+                maxSteps: 0
+            )
+        }
+        #expect(throws: RLSwiftError.invalidSampleCount(0)) {
+            _ = try TensorRTCUDAKernelExecutor.ppoObjective(samples: [], configuration: try PPOConfiguration())
+        }
+    }
 }
 
 private struct RecordingSnapshot: Equatable, Sendable {
@@ -382,6 +521,10 @@ private func floats(from value: TensorValue) throws -> [Float] {
         data.copyBytes(to: UnsafeMutableRawBufferPointer(buffer))
     }
     return values
+}
+
+private func round4(_ value: Double) -> Double {
+    (value * 10_000).rounded() / 10_000
 }
 #else
 @Suite struct TensorRTPolicyBackendSupportTests {

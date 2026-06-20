@@ -1,5 +1,40 @@
 import Foundation
 
+/// Linear multiplier schedule for PPO coefficients across optimization epochs.
+public struct PPOAnnealingSchedule: Sendable, Equatable, Codable {
+    /// Coefficient multiplier used on the final optimization epoch.
+    public let finalMultiplier: Double
+
+    /// A schedule that keeps the coefficient unchanged.
+    public static let constant = try! PPOAnnealingSchedule(finalMultiplier: 1)
+
+    /// Creates a linear schedule from multiplier `1` to `finalMultiplier`.
+    public init(finalMultiplier: Double = 1) throws {
+        guard finalMultiplier > 0 else {
+            throw RLSwiftError.invalidWeight(finalMultiplier)
+        }
+        self.finalMultiplier = finalMultiplier
+    }
+
+    /// Returns the multiplier for a zero-based epoch index.
+    public func multiplier(epoch: Int, totalEpochs: Int) throws -> Double {
+        guard totalEpochs > 0 else {
+            throw RLSwiftError.invalidHorizon(totalEpochs)
+        }
+        guard epoch >= 0 else {
+            throw RLSwiftError.invalidSampleCount(epoch)
+        }
+        guard epoch < totalEpochs else {
+            throw RLSwiftError.dimensionMismatch(expected: totalEpochs, actual: epoch + 1)
+        }
+        if totalEpochs == 1 {
+            return finalMultiplier
+        }
+        let progress = Double(epoch) / Double(totalEpochs - 1)
+        return 1 + (finalMultiplier - 1) * progress
+    }
+}
+
 /// Hyperparameters for clipped proximal policy optimization.
 public struct PPOConfiguration: Sendable, Equatable, Codable {
     /// Discount applied to future rewards.
@@ -17,8 +52,23 @@ public struct PPOConfiguration: Sendable, Equatable, Codable {
     /// Weight applied to the policy entropy bonus.
     public let entropyCoefficient: Double
 
+    /// Optional symmetric clipping range around the previous value estimate.
+    public let valueClipRange: Double?
+
     /// Optimizer learning rate used by backend trainers.
     public let learningRate: Double
+
+    /// Linear schedule applied to ``learningRate`` across PPO epochs.
+    public let learningRateSchedule: PPOAnnealingSchedule
+
+    /// Linear schedule applied to ``entropyCoefficient`` across PPO epochs.
+    public let entropyCoefficientSchedule: PPOAnnealingSchedule
+
+    /// Optional global gradient-norm limit used by trainable models.
+    public let maximumGradientNorm: Double?
+
+    /// Priority exponent used when sampling trajectory segments.
+    public let trajectoryPriorityAlpha: Double
 
     /// Number of optimization epochs per collected rollout.
     public let epochs: Int
@@ -33,7 +83,12 @@ public struct PPOConfiguration: Sendable, Equatable, Codable {
         clipRange: Double = 0.2,
         valueLossCoefficient: Double = 0.5,
         entropyCoefficient: Double = 0.01,
+        valueClipRange: Double? = nil,
         learningRate: Double = 3e-4,
+        learningRateSchedule: PPOAnnealingSchedule = .constant,
+        entropyCoefficientSchedule: PPOAnnealingSchedule = .constant,
+        maximumGradientNorm: Double? = nil,
+        trajectoryPriorityAlpha: Double = 0,
         epochs: Int = 4,
         minibatchSize: Int = 256
     ) throws {
@@ -52,8 +107,21 @@ public struct PPOConfiguration: Sendable, Equatable, Codable {
         guard entropyCoefficient >= 0 else {
             throw RLSwiftError.invalidWeight(entropyCoefficient)
         }
+        if let valueClipRange {
+            guard valueClipRange >= 0 else {
+                throw RLSwiftError.invalidWeight(valueClipRange)
+            }
+        }
         guard learningRate > 0 else {
             throw RLSwiftError.invalidWeight(learningRate)
+        }
+        if let maximumGradientNorm {
+            guard maximumGradientNorm > 0 else {
+                throw RLSwiftError.invalidWeight(maximumGradientNorm)
+            }
+        }
+        guard trajectoryPriorityAlpha >= 0 else {
+            throw RLSwiftError.invalidWeight(trajectoryPriorityAlpha)
         }
         guard epochs > 0 else {
             throw RLSwiftError.invalidHorizon(epochs)
@@ -66,9 +134,43 @@ public struct PPOConfiguration: Sendable, Equatable, Codable {
         self.clipRange = clipRange
         self.valueLossCoefficient = valueLossCoefficient
         self.entropyCoefficient = entropyCoefficient
+        self.valueClipRange = valueClipRange
         self.learningRate = learningRate
+        self.learningRateSchedule = learningRateSchedule
+        self.entropyCoefficientSchedule = entropyCoefficientSchedule
+        self.maximumGradientNorm = maximumGradientNorm
+        self.trajectoryPriorityAlpha = trajectoryPriorityAlpha
         self.epochs = epochs
         self.minibatchSize = minibatchSize
+    }
+
+    /// Scheduled learning rate for a zero-based optimization epoch.
+    public func learningRate(epoch: Int) throws -> Double {
+        learningRate * (try learningRateSchedule.multiplier(epoch: epoch, totalEpochs: epochs))
+    }
+
+    /// Scheduled entropy coefficient for a zero-based optimization epoch.
+    public func entropyCoefficient(epoch: Int) throws -> Double {
+        entropyCoefficient * (try entropyCoefficientSchedule.multiplier(epoch: epoch, totalEpochs: epochs))
+    }
+
+    /// Returns a copy with epoch-specific scheduled coefficients and constant schedules.
+    public func scheduled(epoch: Int) throws -> PPOConfiguration {
+        try PPOConfiguration(
+            discount: discount,
+            gaeLambda: gaeLambda,
+            clipRange: clipRange,
+            valueLossCoefficient: valueLossCoefficient,
+            entropyCoefficient: entropyCoefficient(epoch: epoch),
+            valueClipRange: valueClipRange,
+            learningRate: learningRate(epoch: epoch),
+            learningRateSchedule: .constant,
+            entropyCoefficientSchedule: .constant,
+            maximumGradientNorm: maximumGradientNorm,
+            trajectoryPriorityAlpha: trajectoryPriorityAlpha,
+            epochs: epochs,
+            minibatchSize: minibatchSize
+        )
     }
 }
 
@@ -168,6 +270,9 @@ public struct PPOClippedObjectiveSample: Sendable, Equatable, Codable {
     /// Current value estimate.
     public let valueEstimate: Double
 
+    /// Value estimate recorded under the behavior policy before the update.
+    public let oldValueEstimate: Double?
+
     /// Entropy of the current action distribution.
     public let entropy: Double
 
@@ -178,13 +283,15 @@ public struct PPOClippedObjectiveSample: Sendable, Equatable, Codable {
         advantage: Double,
         returnEstimate: Double,
         valueEstimate: Double,
-        entropy: Double
+        entropy: Double,
+        oldValueEstimate: Double? = nil
     ) {
         self.oldLogProbability = oldLogProbability
         self.newLogProbability = newLogProbability
         self.advantage = advantage
         self.returnEstimate = returnEstimate
         self.valueEstimate = valueEstimate
+        self.oldValueEstimate = oldValueEstimate
         self.entropy = entropy
     }
 
@@ -196,6 +303,27 @@ public struct PPOClippedObjectiveSample: Sendable, Equatable, Codable {
     /// Probability ratio clipped to the PPO trust region.
     public func clippedRatio(clipRange: Double) -> Double {
         min(max(probabilityRatio, 1 - clipRange), 1 + clipRange)
+    }
+
+    /// Value estimate clipped around ``oldValueEstimate`` when value clipping is configured.
+    public func clippedValueEstimate(valueClipRange: Double) -> Double? {
+        guard let oldValueEstimate else {
+            return nil
+        }
+        let delta = min(max(valueEstimate - oldValueEstimate, -valueClipRange), valueClipRange)
+        return oldValueEstimate + delta
+    }
+
+    /// PPO value loss for this sample, including optional value clipping.
+    public func valueLoss(valueClipRange: Double?) -> Double {
+        let valueError = returnEstimate - valueEstimate
+        let unclippedLoss = valueError * valueError
+        guard let valueClipRange,
+              let clippedValueEstimate = clippedValueEstimate(valueClipRange: valueClipRange) else {
+            return 0.5 * unclippedLoss
+        }
+        let clippedError = returnEstimate - clippedValueEstimate
+        return 0.5 * max(unclippedLoss, clippedError * clippedError)
     }
 }
 
@@ -218,6 +346,23 @@ public struct PPOObjectiveBreakdown: Sendable, Equatable, Codable {
 
     /// Fraction of samples whose probability ratio was clipped.
     public let clippedFraction: Double
+
+    /// Creates a scalar PPO objective breakdown.
+    public init(
+        policyLoss: Double,
+        valueLoss: Double,
+        entropyBonus: Double,
+        totalLoss: Double,
+        meanApproximateKL: Double,
+        clippedFraction: Double
+    ) {
+        self.policyLoss = policyLoss
+        self.valueLoss = valueLoss
+        self.entropyBonus = entropyBonus
+        self.totalLoss = totalLoss
+        self.meanApproximateKL = meanApproximateKL
+        self.clippedFraction = clippedFraction
+    }
 }
 
 /// Pure Swift PPO objective math shared by backend-specific learners.
@@ -241,8 +386,7 @@ public enum PPOClippedObjective {
             let ratio = sample.probabilityRatio
             let clippedRatio = sample.clippedRatio(clipRange: configuration.clipRange)
             policyTotal += min(ratio * sample.advantage, clippedRatio * sample.advantage)
-            let valueError = sample.returnEstimate - sample.valueEstimate
-            valueTotal += 0.5 * valueError * valueError
+            valueTotal += sample.valueLoss(valueClipRange: configuration.valueClipRange)
             entropyTotal += sample.entropy
             klTotal += sample.oldLogProbability - sample.newLogProbability
             if abs(ratio - 1) > configuration.clipRange {

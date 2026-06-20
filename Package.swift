@@ -75,6 +75,10 @@ let package = Package(
             name: "RLSwiftTensorRT",
             dependencies: [
                 "RLSwift",
+                .target(
+                    name: "RLSwiftCUDANative",
+                    condition: .when(platforms: [.linux], traits: ["TensorRTBackend"])
+                ),
                 .product(
                     name: "TensorRT",
                     package: "tensorrt-swift",
@@ -86,6 +90,14 @@ let package = Package(
                 .enableUpcomingFeature("ExistentialAny"),
                 .enableUpcomingFeature("InternalImportsByDefault"),
                 .enableUpcomingFeature("MemberImportVisibility"),
+            ]
+        ),
+        .target(
+            name: "RLSwiftCUDANative",
+            path: "Sources/RLSwiftCUDANative",
+            publicHeadersPath: "include",
+            linkerSettings: [
+                .linkedLibrary("dl", .when(platforms: [.linux])),
             ]
         ),
         .executableTarget(

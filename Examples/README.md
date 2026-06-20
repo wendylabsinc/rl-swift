@@ -27,3 +27,26 @@ Useful flags:
 ```sh
 swift run robot-grid-world --episodes 300 --max-steps 48 --seed 17
 ```
+
+## VectorizedPPO
+
+`VectorizedPPO` runs a compact PPO collect/update loop over vectorized
+LineWorld environments and exercises the Puffer-style workflow APIs:
+
+- `StructuredObservationSchema` and `StructuredTensorField`
+- `VectorizedEnvironmentRunner` and `VectorizationProfile`
+- `DenseDiscreteActorCriticModel`, `PPOAdvantageEstimator`, and `NeuralPPOTrainer`
+- `ThroughputMeter`, `TrainingDashboardSnapshot`, and `PolicyCheckpointManifest`
+
+Run it with the default deterministic configuration:
+
+```sh
+cd Examples/VectorizedPPO
+swift run vectorized-ppo
+```
+
+Useful flags:
+
+```sh
+swift run vectorized-ppo --iterations 4 --envs 8 --rollout 4 --seed 13
+```
