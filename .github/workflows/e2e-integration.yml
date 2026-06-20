@@ -17,10 +17,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Swift
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: "6.3"
+      - name: Show Swift version
+        run: swift --version
 
       - name: Run Swift package tests
         run: swift test --parallel
@@ -32,10 +30,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Swift
-        uses: swift-actions/setup-swift@v2
-        with:
-          swift-version: "6.3"
+      - name: Install Swift 6.3.2
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            binutils \
+            git \
+            gnupg2 \
+            libc6-dev \
+            libcurl4-openssl-dev \
+            libedit2 \
+            libgcc-13-dev \
+            libicu-dev \
+            libpython3-dev \
+            libsqlite3-0 \
+            libstdc++-13-dev \
+            libxml2-dev \
+            libz3-dev \
+            pkg-config \
+            tzdata \
+            unzip \
+            zlib1g-dev
+          curl -fsSL https://download.swift.org/swift-6.3.2-release/ubuntu2404/swift-6.3.2-RELEASE/swift-6.3.2-RELEASE-ubuntu24.04.tar.gz -o swift-6.3.2.tar.gz
+          sudo tar -xzf swift-6.3.2.tar.gz -C /opt
+          echo "/opt/swift-6.3.2-RELEASE-ubuntu24.04/usr/bin" >> "$GITHUB_PATH"
 
       - name: Run core-only tests
         run: |
