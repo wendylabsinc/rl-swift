@@ -17,6 +17,7 @@ swift --version
 ```sh
 swift test
 ./scripts/check-coverage.sh
+(cd Examples/RobotGridWorld && swift run robot-grid-world)
 swift package generate-documentation --target RLSwift
 swift package generate-documentation --target RLSwiftMLX
 swift package generate-documentation --target RLSwiftTensorRT
@@ -87,6 +88,17 @@ TensorRT is unavailable. On Linux builds where the `TensorRT` module is
 importable, `TensorRTPolicyBackend` is compiled and can select optimization
 profiles, reshape dynamic inputs, enqueue TensorRT inference, decode `Float32`
 outputs, and convert them into `RobotAction` values.
+
+## Examples
+
+Runnable example projects live in `Examples/`. Start with `RobotGridWorld`,
+which trains a tabular Q-learning policy in a deterministic navigation task and
+exercises the robot/autonomy API surface around the loop:
+
+```sh
+cd Examples/RobotGridWorld
+swift run robot-grid-world
+```
 
 ## Robot and Autonomy Gap Analysis
 

@@ -29,6 +29,10 @@ jobs:
       - name: Run Swift package tests
         run: swift test --parallel
 
+      - name: Run RobotGridWorld example
+        working-directory: Examples/RobotGridWorld
+        run: swift run robot-grid-world
+
   e2e-linux:
     name: Linux Core Integration
     runs-on: ubuntu-latest
@@ -65,6 +69,10 @@ jobs:
         run: |
           swift --version
           swift test --disable-default-traits --parallel
+
+      - name: Run RobotGridWorld example
+        working-directory: Examples/RobotGridWorld
+        run: swift run robot-grid-world
 
       - name: Run TensorRT-guarded tests (best effort)
         continue-on-error: true
