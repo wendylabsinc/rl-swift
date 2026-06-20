@@ -113,42 +113,18 @@ bounded when a learned policy is connected to hardware:
   scarce safety, collision, timeout, or recovery events to be sampled more often
   than ordinary transitions.
 
-### Implemented Need-to-Haves
-
-- `ModelIOContract`, `ObservationFeature`, `NormalizationSnapshot`,
-  `ActionSpecification`, `TensorRTBindingNames`, and `PolicyMetadata` pin
-  observation order, normalization state, action units, TensorRT binding names,
-  and policy metadata.
-- `HardwareSafetySupervisor`, `SafetySupervisorInput`,
-  `SafetySupervisorDecision`, and `EmergencyStopState` keep watchdog-style
-  checks, emergency stops, sensor freshness, actuator envelopes, and command-rate
-  limits outside the learned policy.
-- `OfflineDataset`, `LoggedTransition`, `DatasetManifest`, and
-  `DatasetProvenance` preserve dataset provenance, timestamps, termination
-  causes, constraint costs, and replayable safety interventions.
-- `DeploymentTarget`, `DeploymentPlan`, and `DeploymentBackend` describe
-  deterministic backend selection for MLX on Apple devices, TensorRT on NVIDIA
-  Linux, and core Swift fallback deployments.
-- `AutonomyTelemetryAccumulator`, `AutonomyTelemetrySummary`, and
-  `PolicyVersionRollout` track latency, deadline misses, intervention counts,
-  constraint costs, and deterministic policy-version rollout decisions.
-
-### Implemented Nice-to-Haves
-
-- `RobotIntegrationAdapterConfiguration` provides dependency-light ROS 2,
-  simulator, and WendyOS adapter descriptors.
-- `VectorizedEnvironmentRunner` and `RolloutShardAssignment` support vectorized
-  environments and distributed rollout collection.
-- `ONNXExportDescriptor`, `TensorRTEngineCacheKey`, and
-  `TensorRTEngineCacheManifest` describe ONNX exports and TensorRT engine cache
-  entries.
-- `CurriculumStage`, `CurriculumSchedule`, `DomainRandomizationParameter`,
-  `DomainRandomizationProfile`, `EvaluationRecord`, and
-  `EvaluationDashboardSummary` cover curriculum learning, domain randomization,
-  and evaluation dashboards.
-- `ObservationDriftSnapshot`, `ActionSaturationSnapshot`, and
-  `PrioritizedReplayDebugSnapshot` provide visual debugging inputs for
-  observation drift, action saturation, and rare prioritized replay events.
+| Priority | Robot or autonomy gap | RLSwift API surface |
+| --- | --- | --- |
+| Need-to-have | Versioned model IO contracts that pin observation order, normalization state, action units, TensorRT binding names, and policy metadata. | `ModelIOContract`, `ObservationFeature`, `NormalizationSnapshot`, `ActionSpecification`, `TensorRTBindingNames`, `PolicyMetadata` |
+| Need-to-have | Hardware-facing safety supervisors outside the learned policy for watchdog checks, emergency stops, sensor freshness, actuator envelopes, and command-rate limits. | `HardwareSafetySupervisor`, `SafetySupervisorInput`, `SafetySupervisorDecision`, `EmergencyStopState` |
+| Need-to-have | Durable offline data pipelines with manifests, provenance, timestamps, termination causes, constraint costs, and replayable safety interventions. | `OfflineDataset`, `LoggedTransition`, `DatasetManifest`, `DatasetProvenance` |
+| Need-to-have | Deterministic deployment backend selection for MLX on Apple devices, TensorRT on NVIDIA Linux, and core Swift fallback deployments. | `DeploymentTarget`, `DeploymentPlan`, `DeploymentBackend` |
+| Need-to-have | Real-time observability for latency, deadline misses, intervention counts, constraint costs, and policy-version rollout decisions. | `AutonomyTelemetryAccumulator`, `AutonomyTelemetrySummary`, `PolicyVersionRollout` |
+| Nice-to-have | Dependency-light ROS 2, simulator, and WendyOS adapter descriptors. | `RobotIntegrationAdapterConfiguration` |
+| Nice-to-have | Vectorized environments and distributed rollout collection. | `VectorizedEnvironmentRunner`, `RolloutShardAssignment` |
+| Nice-to-have | ONNX export descriptors and TensorRT engine cache metadata. | `ONNXExportDescriptor`, `TensorRTEngineCacheKey`, `TensorRTEngineCacheManifest` |
+| Nice-to-have | Curriculum learning, domain randomization, and evaluation dashboard summaries. | `CurriculumStage`, `CurriculumSchedule`, `DomainRandomizationParameter`, `DomainRandomizationProfile`, `EvaluationRecord`, `EvaluationDashboardSummary` |
+| Nice-to-have | Visual debugging inputs for observation drift, action saturation, and rare prioritized replay events. | `ObservationDriftSnapshot`, `ActionSaturationSnapshot`, `PrioritizedReplayDebugSnapshot` |
 
 ## Package Surface
 
