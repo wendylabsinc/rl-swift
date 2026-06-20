@@ -1,5 +1,5 @@
 /// Timing metadata for a single robot or autonomous-system control step.
-public struct ControlTiming: Sendable, Equatable {
+public struct ControlTiming: Sendable, Equatable, Codable {
     /// The zero-based control step index.
     public let stepIndex: Int
 

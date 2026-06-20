@@ -1,5 +1,5 @@
 /// The direction used to evaluate a scalar safety or performance constraint.
-public enum ConstraintRelation: String, Sendable, Equatable {
+public enum ConstraintRelation: String, Sendable, Equatable, Codable {
     /// The value must be less than or equal to the limit.
     case lessThanOrEqual
 
@@ -8,7 +8,7 @@ public enum ConstraintRelation: String, Sendable, Equatable {
 }
 
 /// A scalar constraint signal for constrained or safety-aware reinforcement learning.
-public struct ConstraintSignal: Sendable, Equatable {
+public struct ConstraintSignal: Sendable, Equatable, Codable {
     /// A stable name for the constraint.
     public let name: String
 
@@ -69,7 +69,7 @@ public struct ConstraintSignal: Sendable, Equatable {
 }
 
 /// A collection of constraint signals produced by a robot step or trajectory.
-public struct ConstraintReport: Sendable, Equatable {
+public struct ConstraintReport: Sendable, Equatable, Codable {
     /// The constraints included in the report.
     public let signals: [ConstraintSignal]
 

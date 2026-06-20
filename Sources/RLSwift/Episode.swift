@@ -38,6 +38,7 @@ public struct Transition<Observation: Sendable, Action: Sendable>: Sendable {
 }
 
 extension Transition: Equatable where Observation: Equatable, Action: Equatable {}
+extension Transition: Codable where Observation: Codable, Action: Codable {}
 
 /// An ordered collection of transitions produced during a single episode.
 public struct Episode<Observation: Sendable, Action: Sendable>: Sendable {
@@ -86,3 +87,4 @@ public struct Episode<Observation: Sendable, Action: Sendable>: Sendable {
 }
 
 extension Episode: Equatable where Observation: Equatable, Action: Equatable {}
+extension Episode: Codable where Observation: Codable, Action: Codable {}

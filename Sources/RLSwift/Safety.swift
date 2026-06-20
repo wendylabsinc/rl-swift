@@ -1,5 +1,5 @@
 /// A single safety-layer modification made to a robot command.
-public enum SafetyIntervention: Sendable, Equatable {
+public enum SafetyIntervention: Sendable, Equatable, Codable {
     /// A command was clipped to the absolute command bounds.
     case commandClipped(index: Int, requested: Double, applied: Double)
 
@@ -8,7 +8,7 @@ public enum SafetyIntervention: Sendable, Equatable {
 }
 
 /// The result of passing an action through a safety envelope.
-public struct RobotSafetyAssessment: Sendable, Equatable {
+public struct RobotSafetyAssessment: Sendable, Equatable, Codable {
     /// The action requested by a policy or caller.
     public let requestedAction: RobotAction
 
@@ -36,7 +36,7 @@ public struct RobotSafetyAssessment: Sendable, Equatable {
 }
 
 /// A safety envelope that clips robot commands and rate-limits changes between actions.
-public struct RobotSafetyEnvelope: Sendable, Equatable {
+public struct RobotSafetyEnvelope: Sendable, Equatable, Codable {
     /// The absolute command bounds enforced for every action.
     public let commandSpace: ContinuousBoxSpace
 

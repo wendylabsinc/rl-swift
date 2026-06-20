@@ -113,36 +113,60 @@ bounded when a learned policy is connected to hardware:
   scarce safety, collision, timeout, or recovery events to be sampled more often
   than ordinary transitions.
 
-### Need-to-Haves
+### Implemented Need-to-Haves
 
-- Versioned model IO contracts that pin observation order, normalization state,
-  action units, TensorRT binding names, and policy metadata.
-- Hardware-facing safety supervisors outside the policy: watchdogs, emergency
-  stops, sensor freshness checks, actuator envelopes, and command-rate limits.
-- Durable offline data pipelines with dataset manifests, provenance, timestamps,
-  termination causes, and replayable safety interventions.
-- Deterministic deployment backends for the target hardware: MLX on Apple
-  devices and TensorRT on NVIDIA Linux.
-- Real-time observability for latency, deadline misses, intervention counts,
-  constraint costs, and policy version rollouts.
+- `ModelIOContract`, `ObservationFeature`, `NormalizationSnapshot`,
+  `ActionSpecification`, `TensorRTBindingNames`, and `PolicyMetadata` pin
+  observation order, normalization state, action units, TensorRT binding names,
+  and policy metadata.
+- `HardwareSafetySupervisor`, `SafetySupervisorInput`,
+  `SafetySupervisorDecision`, and `EmergencyStopState` keep watchdog-style
+  checks, emergency stops, sensor freshness, actuator envelopes, and command-rate
+  limits outside the learned policy.
+- `OfflineDataset`, `LoggedTransition`, `DatasetManifest`, and
+  `DatasetProvenance` preserve dataset provenance, timestamps, termination
+  causes, constraint costs, and replayable safety interventions.
+- `DeploymentTarget`, `DeploymentPlan`, and `DeploymentBackend` describe
+  deterministic backend selection for MLX on Apple devices, TensorRT on NVIDIA
+  Linux, and core Swift fallback deployments.
+- `AutonomyTelemetryAccumulator`, `AutonomyTelemetrySummary`, and
+  `PolicyVersionRollout` track latency, deadline misses, intervention counts,
+  constraint costs, and deterministic policy-version rollout decisions.
 
-### Nice-to-Haves
+### Implemented Nice-to-Haves
 
-- ROS 2, simulator, and WendyOS adapters for common robot integration paths.
-- Vectorized environments and distributed rollout collection for larger training
-  runs.
-- ONNX export helpers and TensorRT engine cache management.
-- Curriculum learning, domain randomization, and evaluation dashboards.
-- Visual debugging tools for observation drift, action saturation, and rare
-  prioritized replay events.
+- `RobotIntegrationAdapterConfiguration` provides dependency-light ROS 2,
+  simulator, and WendyOS adapter descriptors.
+- `VectorizedEnvironmentRunner` and `RolloutShardAssignment` support vectorized
+  environments and distributed rollout collection.
+- `ONNXExportDescriptor`, `TensorRTEngineCacheKey`, and
+  `TensorRTEngineCacheManifest` describe ONNX exports and TensorRT engine cache
+  entries.
+- `CurriculumStage`, `CurriculumSchedule`, `DomainRandomizationParameter`,
+  `DomainRandomizationProfile`, `EvaluationRecord`, and
+  `EvaluationDashboardSummary` cover curriculum learning, domain randomization,
+  and evaluation dashboards.
+- `ObservationDriftSnapshot`, `ActionSaturationSnapshot`, and
+  `PrioritizedReplayDebugSnapshot` provide visual debugging inputs for
+  observation drift, action saturation, and rare prioritized replay events.
 
 ## Package Surface
 
 - Generic `Environment` and `Agent` protocols.
 - `StepTermination`, `Transition`, `StepResult`, and `Episode` for rollout accounting.
 - `ControlTiming` for closed-loop latency and deadline metadata.
+- `ModelIOContract` and related IO metadata types for versioned policy inputs
+  and outputs.
 - Continuous `ContinuousBoxSpace` bounds for robot commands and observations.
 - `RobotAction`, `RobotObservation`, `RobotSafetyEnvelope`, and `RobotSafetyAssessment` for robot control loops.
+- `HardwareSafetySupervisor` and related decision types for deployment-time
+  safety checks outside the policy.
+- `OfflineDataset`, `DatasetManifest`, and `LoggedTransition` for durable robot
+  datasets.
+- `DeploymentPlan`, `DeploymentTarget`, and `AutonomyTelemetryAccumulator` for
+  deployment and observability.
+- Adapter, vectorized rollout, export/cache, curriculum, evaluation, and visual
+  debug descriptors for autonomy workflows.
 - `ActionSmoother` for low-pass command filtering.
 - `ConstraintSignal` and `ConstraintReport` for constrained robot learning.
 - `ObservationNormalizer` for streaming sensor-feature statistics.

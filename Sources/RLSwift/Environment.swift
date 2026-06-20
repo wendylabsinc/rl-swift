@@ -1,5 +1,5 @@
 /// The reason an environment step did or did not end an episode.
-public enum StepTermination: Sendable, Equatable {
+public enum StepTermination: Sendable, Equatable, Codable {
     /// The episode is still running.
     case continuing
 

@@ -34,6 +34,18 @@ public enum RLSwiftError: Error, Equatable, Sendable {
 
     /// Indicates that a replay priority was not strictly positive.
     case invalidPriority(Double)
+
+    /// Indicates that a stable identifier or name was empty.
+    case emptyIdentifier(name: String)
+
+    /// Indicates that a stable identifier appeared more than once.
+    case duplicateIdentifier(String)
+
+    /// Indicates that an indexed collection contained duplicate indices.
+    case duplicateIndex(Int)
+
+    /// Indicates that a versioned contract or manifest used an empty version string.
+    case invalidVersion(String)
 }
 
 /// A deterministic random number generator suitable for reproducible reinforcement learning tests.
@@ -80,7 +92,7 @@ public struct DiscreteActionSpace<Action: Hashable & Sendable>: Sendable {
 }
 
 /// A bounded continuous action or observation space.
-public struct ContinuousBoxSpace: Sendable, Equatable {
+public struct ContinuousBoxSpace: Sendable, Equatable, Codable {
     /// The inclusive lower bounds for each dimension.
     public let lowerBounds: [Double]
 

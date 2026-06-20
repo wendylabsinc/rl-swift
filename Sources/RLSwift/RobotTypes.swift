@@ -1,5 +1,5 @@
 /// The control interpretation for a robot command vector.
-public enum RobotControlMode: String, Sendable, Equatable {
+public enum RobotControlMode: String, Sendable, Equatable, Codable {
     /// Interprets command values as target joint positions.
     case position
 
@@ -11,7 +11,7 @@ public enum RobotControlMode: String, Sendable, Equatable {
 }
 
 /// A robot action represented by a continuous command vector.
-public struct RobotAction: Sendable, Equatable {
+public struct RobotAction: Sendable, Equatable, Codable {
     /// The command values in the units implied by `mode`.
     public let commands: [Double]
 
@@ -31,7 +31,7 @@ public struct RobotAction: Sendable, Equatable {
 }
 
 /// A compact robot observation containing proprioception, task pose, and named sensors.
-public struct RobotObservation: Sendable, Equatable {
+public struct RobotObservation: Sendable, Equatable, Codable {
     /// Joint positions in a deterministic robot-specific order.
     public let jointPositions: [Double]
 
@@ -75,7 +75,7 @@ public struct RobotObservation: Sendable, Equatable {
 }
 
 /// A scalar reward term that can be weighted and combined with other terms.
-public struct RewardComponent: Sendable, Equatable {
+public struct RewardComponent: Sendable, Equatable, Codable {
     /// A stable name for the reward component.
     public let name: String
 
@@ -99,7 +99,7 @@ public struct RewardComponent: Sendable, Equatable {
 }
 
 /// A deterministic reward accumulator for shaped robot rewards.
-public struct RewardBreakdown: Sendable, Equatable {
+public struct RewardBreakdown: Sendable, Equatable, Codable {
     /// The component terms used to build the total reward.
     public let components: [RewardComponent]
 

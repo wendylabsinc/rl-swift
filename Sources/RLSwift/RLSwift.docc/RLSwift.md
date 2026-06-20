@@ -54,12 +54,15 @@ logged-data quality. RLSwift covers the most important gaps in the core package:
 - ``PrioritizedReplayBuffer`` lets rare but important autonomy events be sampled
   more often than ordinary transitions.
 
-Need-to-have autonomy capabilities beyond the core loop include versioned model
-IO contracts, durable offline datasets, hardware-facing safety supervisors,
-deterministic deployment backends, and real-time observability for latency and
-interventions. Nice-to-have extensions include ROS 2 or simulator adapters,
-vectorized rollout collection, ONNX export helpers, curriculum learning, domain
-randomization, and visual debugging tools.
+The package also includes concrete autonomy infrastructure for the gaps that
+usually appear when policies leave toy environments: ``ModelIOContract`` pins
+model input/output order and deployment metadata; ``HardwareSafetySupervisor``
+keeps emergency-stop, freshness, deadline, and envelope checks outside the
+policy; ``OfflineDataset`` stores replayable logged data with provenance; and
+``AutonomyTelemetryAccumulator`` summarizes latency, safety, constraints, and
+policy-version rollout behavior. Dependency-light descriptors cover ROS 2,
+simulator, WendyOS, vectorized rollout, ONNX export, TensorRT engine cache,
+curriculum, domain randomization, evaluation, and visual debugging workflows.
 
 ## Topics
 
@@ -86,9 +89,21 @@ randomization, and visual debugging tools.
 - ``RobotAction``
 - ``RobotControlMode``
 - ``RobotObservation``
+- ``ModelIOContract``
+- ``ObservationFeature``
+- ``RobotObservationComponent``
+- ``NormalizationSnapshot``
+- ``ActionSpecification``
+- ``TensorRTBindingNames``
+- ``PolicyMetadata``
 - ``RobotSafetyEnvelope``
 - ``RobotSafetyAssessment``
 - ``SafetyIntervention``
+- ``EmergencyStopState``
+- ``HardwareSafetySupervisor``
+- ``SafetySupervisorInput``
+- ``SafetySupervisorDecision``
+- ``SafetySupervisorIntervention``
 - ``ActionSmoother``
 - ``ObservationNormalizer``
 - ``RewardBreakdown``
@@ -96,6 +111,39 @@ randomization, and visual debugging tools.
 - ``ConstraintRelation``
 - ``ConstraintSignal``
 - ``ConstraintReport``
+
+### Datasets and Deployment
+
+- ``DatasetProvenance``
+- ``LoggedTransition``
+- ``DatasetManifest``
+- ``OfflineDataset``
+- ``DeploymentBackend``
+- ``DeploymentTarget``
+- ``DeploymentPlan``
+- ``PolicyVersionRollout``
+- ``AutonomyTelemetryAccumulator``
+- ``AutonomyTelemetrySummary``
+
+### Integration and Debugging
+
+- ``RobotIntegrationKind``
+- ``RobotIntegrationAdapterConfiguration``
+- ``VectorizedEnvironmentRunner``
+- ``VectorizedStepResult``
+- ``RolloutShardAssignment``
+- ``ONNXExportDescriptor``
+- ``TensorRTEngineCacheKey``
+- ``TensorRTEngineCacheManifest``
+- ``DomainRandomizationParameter``
+- ``DomainRandomizationProfile``
+- ``CurriculumStage``
+- ``CurriculumSchedule``
+- ``EvaluationRecord``
+- ``EvaluationDashboardSummary``
+- ``ObservationDriftSnapshot``
+- ``ActionSaturationSnapshot``
+- ``PrioritizedReplayDebugSnapshot``
 
 ### Learning
 
