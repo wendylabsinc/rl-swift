@@ -28,9 +28,11 @@ public struct ActionSmoother: Sendable, Equatable {
         guard previousCommands.count == action.commands.count else {
             throw RLSwiftError.dimensionMismatch(expected: previousCommands.count, actual: action.commands.count)
         }
-        let commands = action.commands.indices.map { index in
-            previousCommands[index] + alpha * (action.commands[index] - previousCommands[index])
+        var scratch = VectorScratch(count: action.commands.count)
+        for index in 0..<action.commands.count {
+            scratch.set(previousCommands[index] + alpha * (action.commands[index] - previousCommands[index]), at: index)
         }
+        let commands = scratch.finish()
         self.previousCommands = commands
         return RobotAction(commands: commands, mode: action.mode)
     }

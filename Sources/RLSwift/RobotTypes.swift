@@ -67,10 +67,17 @@ public struct RobotObservation: Sendable, Equatable, Codable {
 
     /// Flattens the observation into a deterministic feature vector.
     public func flattenedFeatures(sensorOrder: [String]) -> [Double] {
-        jointPositions
-            + jointVelocities
-            + endEffectorPose
-            + sensorOrder.map { sensorReadings[$0] ?? 0 }
+        var features: [Double] = []
+        features.reserveCapacity(
+            jointPositions.count + jointVelocities.count + endEffectorPose.count + sensorOrder.count
+        )
+        features.append(contentsOf: jointPositions)
+        features.append(contentsOf: jointVelocities)
+        features.append(contentsOf: endEffectorPose)
+        for sensor in sensorOrder {
+            features.append(sensorReadings[sensor] ?? 0)
+        }
+        return features
     }
 }
 

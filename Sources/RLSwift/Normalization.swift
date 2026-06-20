@@ -30,14 +30,18 @@ public struct ObservationNormalizer: Sendable, Equatable {
         guard count > 0 else {
             return Array(repeating: 0, count: dimension)
         }
-        return m2Storage.map { $0 / Double(count) }
+        var scratch = VectorScratch(count: dimension)
+        for index in 0..<dimension {
+            scratch.set(m2Storage[index] / Double(count), at: index)
+        }
+        return scratch.finish()
     }
 
     /// Incorporates one sample using Welford's online algorithm.
     public mutating func update(with sample: [Double]) throws {
         try validate(sample)
         count += 1
-        for index in sample.indices {
+        for index in 0..<dimension {
             let delta = sample[index] - meanStorage[index]
             meanStorage[index] += delta / Double(count)
             let delta2 = sample[index] - meanStorage[index]
@@ -49,10 +53,12 @@ public struct ObservationNormalizer: Sendable, Equatable {
     public func normalize(_ sample: [Double], epsilon: Double = 1e-8) throws -> [Double] {
         try validate(sample)
         let currentVariance = variance
-        return sample.indices.map { index in
+        var scratch = VectorScratch(count: dimension)
+        for index in 0..<dimension {
             let standardDeviation = sqrt(currentVariance[index] + epsilon)
-            return (sample[index] - meanStorage[index]) / standardDeviation
+            scratch.set((sample[index] - meanStorage[index]) / standardDeviation, at: index)
         }
+        return scratch.finish()
     }
 
     /// Resets all accumulated statistics.

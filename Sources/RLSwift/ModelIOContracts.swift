@@ -106,9 +106,11 @@ public struct NormalizationSnapshot: Sendable, Equatable, Codable {
         guard values.count == mean.count else {
             throw RLSwiftError.dimensionMismatch(expected: mean.count, actual: values.count)
         }
-        return values.indices.map { index in
-            (values[index] - mean[index]) / (variance[index] + epsilon).squareRoot()
+        var scratch = VectorScratch(count: mean.count)
+        for index in 0..<mean.count {
+            scratch.set((values[index] - mean[index]) / (variance[index] + epsilon).squareRoot(), at: index)
         }
+        return scratch.finish()
     }
 }
 

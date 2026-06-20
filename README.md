@@ -28,6 +28,21 @@ swift package generate-documentation --target RLSwiftMLX
 swift package generate-documentation --target RLSwiftTensorRT
 ```
 
+## Swift 6.3 Performance Notes
+
+RLSwift uses Swift 6 ownership features where they are portable across the
+declared platform matrix. Hot vector transforms in action scaling, normalization,
+model IO, and control smoothing use internal move-only scratch storage
+(`~Copyable`) to build a single owned output array without intermediate `map`
+closures or accidental scratch copies.
+
+`Span` and `InlineArray` were evaluated for public vector APIs and fixed-size
+robot vectors, but in the current Apple Swift 6.3.2 toolchain they are gated to
+OS 26 availability. Exposing them unconditionally would break the package's
+macOS 14, iOS 17, iPadOS 17, tvOS 17, visionOS 1, and Linux support. They should
+remain candidates for future availability-gated APIs once SwiftPM and the
+supported deployment targets make that surface practical.
+
 ## Backend Traits
 
 SwiftPM traits are the right fit for backend selection in Swift 6.3+. This

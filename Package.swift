@@ -46,7 +46,6 @@ let package = Package(
             name: "RLSwift",
             dependencies: [],
             swiftSettings: [
-                .define("SWIFTRL_ENABLE_MLX", .when(traits: ["MLXBackend"])),
                 .enableUpcomingFeature("ExistentialAny"),
                 .enableUpcomingFeature("InternalImportsByDefault"),
                 .enableUpcomingFeature("MemberImportVisibility"),
@@ -62,7 +61,7 @@ let package = Package(
                 .product(name: "MLXRandom", package: "mlx-swift", condition: .when(traits: ["MLXBackend"])),
             ],
             swiftSettings: [
-                .define("SWIFTRL_ENABLE_TENSORRT", .when(platforms: [.linux], traits: ["TensorRTBackend"])),
+                .define("SWIFTRL_ENABLE_MLX", .when(traits: ["MLXBackend"])),
                 .enableUpcomingFeature("ExistentialAny"),
                 .enableUpcomingFeature("InternalImportsByDefault"),
                 .enableUpcomingFeature("MemberImportVisibility"),
@@ -79,7 +78,7 @@ let package = Package(
                 ),
             ],
             swiftSettings: [
-                .define("SWIFTRL_ENABLE_MLX", .when(traits: ["MLXBackend"])),
+                .define("SWIFTRL_ENABLE_TENSORRT", .when(platforms: [.linux], traits: ["TensorRTBackend"])),
                 .enableUpcomingFeature("ExistentialAny"),
                 .enableUpcomingFeature("InternalImportsByDefault"),
                 .enableUpcomingFeature("MemberImportVisibility"),
@@ -96,7 +95,7 @@ let package = Package(
                 .product(name: "MLX", package: "mlx-swift", condition: .when(traits: ["MLXBackend"])),
             ],
             swiftSettings: [
-                .define("SWIFTRL_ENABLE_TENSORRT", .when(platforms: [.linux], traits: ["TensorRTBackend"])),
+                .define("SWIFTRL_ENABLE_MLX", .when(traits: ["MLXBackend"])),
                 .enableUpcomingFeature("ExistentialAny"),
                 .enableUpcomingFeature("InternalImportsByDefault"),
                 .enableUpcomingFeature("MemberImportVisibility"),
@@ -113,6 +112,7 @@ let package = Package(
                 ),
             ],
             swiftSettings: [
+                .define("SWIFTRL_ENABLE_TENSORRT", .when(platforms: [.linux], traits: ["TensorRTBackend"])),
                 .enableUpcomingFeature("ExistentialAny"),
                 .enableUpcomingFeature("InternalImportsByDefault"),
                 .enableUpcomingFeature("MemberImportVisibility"),

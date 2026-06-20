@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-swift test --enable-code-coverage
+swift test --enable-code-coverage --parallel --num-workers 1
 
 BIN_PATH="$(swift build --show-bin-path)"
 TEST_BUNDLE="${BIN_PATH}/RLSwiftPackageTests.xctest"

@@ -20,6 +20,15 @@ enabled. This keeps the core RLSwift product dependency-light while allowing
 iOS, iPadOS, visionOS, macOS, DGX, Jetson, and NVIDIA Linux deployments to select
 the backend they need.
 
+Hot vector transforms use Swift 6 ownership features where they are portable
+across the declared deployment targets. Internally, RLSwift uses move-only
+scratch storage for action scaling, normalization, model IO, and command
+smoothing so those paths build one owned output array without intermediate
+`map` closures. `Span` and `InlineArray` were evaluated for public vector APIs,
+but this Swift 6.3.2 toolchain gates them to OS 26 availability, so the stable
+public API avoids them until that surface can coexist with macOS 14, iOS 17,
+iPadOS 17, tvOS 17, visionOS 1, and Linux support.
+
 ## Apple Device Support
 
 RLSwift is not limited to macOS. The package declares support for macOS 14,
