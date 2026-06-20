@@ -1,0 +1,5 @@
+module CMuJoCo [system] {
+  header "include/CMuJoCo.h"
+  link "mujoco"
+  export *
+}

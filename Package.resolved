@@ -1,5 +1,5 @@
 {
-  "originHash" : "e89bff000b1a5e641d2744b8a39ccfd542c0b1181fab020fb81ec10fc7646ed3",
+  "originHash" : "36bf7b924bbcd11fb60a167427f4c3b2bb082632b921b364879f93f3ea1200f2",
   "pins" : [
     {
       "identity" : "mlx-swift",
@@ -35,15 +35,6 @@
       "state" : {
         "revision" : "0c0290ff6b24942dadb83a929ffaaa1481df04a2",
         "version" : "1.1.1"
-      }
-    },
-    {
-      "identity" : "tensorrt-swift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/wendylabsinc/tensorrt-swift",
-      "state" : {
-        "revision" : "db9d54d03439aa6c14394673de1cbf432b5bef2a",
-        "version" : "0.0.6"
       }
     }
   ],

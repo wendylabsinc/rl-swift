@@ -24,6 +24,14 @@ let package = Package(
             name: "RLSwiftTensorRT",
             targets: ["RLSwiftTensorRT"]
         ),
+        .library(
+            name: "RLSwiftMuJoCo",
+            targets: ["RLSwiftMuJoCo"]
+        ),
+        .library(
+            name: "RLSwiftIsaacSim",
+            targets: ["RLSwiftIsaacSim"]
+        ),
         .executable(
             name: "rl-swift",
             targets: ["RLSwiftCLI"]
@@ -38,6 +46,10 @@ let package = Package(
         .trait(
             name: "TensorRTBackend",
             description: "Build the TensorRT-backed RLSwift integration target for NVIDIA Linux."
+        ),
+        .trait(
+            name: "MuJoCoBackend",
+            description: "Build the MuJoCo-backed simulator integration target when MuJoCo headers and libraries are installed."
         ),
     ],
     dependencies: [
@@ -59,13 +71,32 @@ let package = Package(
             name: "RLSwiftMLX",
             dependencies: [
                 "RLSwift",
-                .product(name: "MLX", package: "mlx-swift", condition: .when(traits: ["MLXBackend"])),
-                .product(name: "MLXNN", package: "mlx-swift", condition: .when(traits: ["MLXBackend"])),
-                .product(name: "MLXOptimizers", package: "mlx-swift", condition: .when(traits: ["MLXBackend"])),
-                .product(name: "MLXRandom", package: "mlx-swift", condition: .when(traits: ["MLXBackend"])),
+                .product(
+                    name: "MLX",
+                    package: "mlx-swift",
+                    condition: .when(platforms: [.macOS, .iOS, .tvOS, .visionOS], traits: ["MLXBackend"])
+                ),
+                .product(
+                    name: "MLXNN",
+                    package: "mlx-swift",
+                    condition: .when(platforms: [.macOS, .iOS, .tvOS, .visionOS], traits: ["MLXBackend"])
+                ),
+                .product(
+                    name: "MLXOptimizers",
+                    package: "mlx-swift",
+                    condition: .when(platforms: [.macOS, .iOS, .tvOS, .visionOS], traits: ["MLXBackend"])
+                ),
+                .product(
+                    name: "MLXRandom",
+                    package: "mlx-swift",
+                    condition: .when(platforms: [.macOS, .iOS, .tvOS, .visionOS], traits: ["MLXBackend"])
+                ),
             ],
             swiftSettings: [
-                .define("SWIFTRL_ENABLE_MLX", .when(traits: ["MLXBackend"])),
+                .define(
+                    "SWIFTRL_ENABLE_MLX",
+                    .when(platforms: [.macOS, .iOS, .tvOS, .visionOS], traits: ["MLXBackend"])
+                ),
                 .enableUpcomingFeature("ExistentialAny"),
                 .enableUpcomingFeature("InternalImportsByDefault"),
                 .enableUpcomingFeature("MemberImportVisibility"),
@@ -93,6 +124,33 @@ let package = Package(
             ]
         ),
         .target(
+            name: "RLSwiftMuJoCo",
+            dependencies: [
+                "RLSwift",
+                .target(name: "CMuJoCo", condition: .when(traits: ["MuJoCoBackend"])),
+            ],
+            swiftSettings: [
+                .define("SWIFTRL_ENABLE_MUJOCO", .when(traits: ["MuJoCoBackend"])),
+                .enableUpcomingFeature("ExistentialAny"),
+                .enableUpcomingFeature("InternalImportsByDefault"),
+                .enableUpcomingFeature("MemberImportVisibility"),
+            ]
+        ),
+        .target(
+            name: "RLSwiftIsaacSim",
+            dependencies: ["RLSwift"],
+            swiftSettings: [
+                .enableUpcomingFeature("ExistentialAny"),
+                .enableUpcomingFeature("InternalImportsByDefault"),
+                .enableUpcomingFeature("MemberImportVisibility"),
+            ]
+        ),
+        .systemLibrary(
+            name: "CMuJoCo",
+            path: "Sources/CMuJoCo",
+            pkgConfig: "mujoco"
+        ),
+        .target(
             name: "RLSwiftCUDANative",
             path: "Sources/RLSwiftCUDANative",
             publicHeadersPath: "include",
@@ -117,10 +175,17 @@ let package = Package(
             name: "RLSwiftMLXTests",
             dependencies: [
                 "RLSwiftMLX",
-                .product(name: "MLX", package: "mlx-swift", condition: .when(traits: ["MLXBackend"])),
+                .product(
+                    name: "MLX",
+                    package: "mlx-swift",
+                    condition: .when(platforms: [.macOS, .iOS, .tvOS, .visionOS], traits: ["MLXBackend"])
+                ),
             ],
             swiftSettings: [
-                .define("SWIFTRL_ENABLE_MLX", .when(traits: ["MLXBackend"])),
+                .define(
+                    "SWIFTRL_ENABLE_MLX",
+                    .when(platforms: [.macOS, .iOS, .tvOS, .visionOS], traits: ["MLXBackend"])
+                ),
                 .enableUpcomingFeature("ExistentialAny"),
                 .enableUpcomingFeature("InternalImportsByDefault"),
                 .enableUpcomingFeature("MemberImportVisibility"),
@@ -138,6 +203,25 @@ let package = Package(
             ],
             swiftSettings: [
                 .define("SWIFTRL_ENABLE_TENSORRT", .when(platforms: [.linux], traits: ["TensorRTBackend"])),
+                .enableUpcomingFeature("ExistentialAny"),
+                .enableUpcomingFeature("InternalImportsByDefault"),
+                .enableUpcomingFeature("MemberImportVisibility"),
+            ]
+        ),
+        .testTarget(
+            name: "RLSwiftMuJoCoTests",
+            dependencies: ["RLSwiftMuJoCo"],
+            swiftSettings: [
+                .define("SWIFTRL_ENABLE_MUJOCO", .when(traits: ["MuJoCoBackend"])),
+                .enableUpcomingFeature("ExistentialAny"),
+                .enableUpcomingFeature("InternalImportsByDefault"),
+                .enableUpcomingFeature("MemberImportVisibility"),
+            ]
+        ),
+        .testTarget(
+            name: "RLSwiftIsaacSimTests",
+            dependencies: ["RLSwiftIsaacSim"],
+            swiftSettings: [
                 .enableUpcomingFeature("ExistentialAny"),
                 .enableUpcomingFeature("InternalImportsByDefault"),
                 .enableUpcomingFeature("MemberImportVisibility"),

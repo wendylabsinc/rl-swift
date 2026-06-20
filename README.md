@@ -5,8 +5,9 @@
 ![Apple Platforms](https://img.shields.io/badge/Apple-macOS%2014%20%7C%20iOS%2017%20%7C%20iPadOS%2017%20%7C%20tvOS%2017%20%7C%20visionOS%201-blue)
 ![Linux](https://img.shields.io/badge/Linux-Ubuntu%2024.04%20%7C%20NVIDIA%20TensorRT-green)
 
-RLSwift is a Swift 6.3+ reinforcement learning package with opt-in MLX and
-TensorRT backends for Apple and NVIDIA Linux deployments.
+RLSwift is a Swift 6.3+ reinforcement learning package with opt-in MLX,
+TensorRT, MuJoCo, and Isaac Sim surfaces for Apple, NVIDIA Linux, and robotics
+simulation workflows.
 
 ## Toolchain
 
@@ -35,6 +36,8 @@ swift run rl-swift visualize
 swift package generate-documentation --target RLSwift
 swift package generate-documentation --target RLSwiftMLX
 swift package generate-documentation --target RLSwiftTensorRT
+swift package --disable-default-traits --traits MuJoCoBackend generate-documentation --target RLSwiftMuJoCo
+swift package generate-documentation --target RLSwiftIsaacSim
 ```
 
 ## CLI Workflow
@@ -76,8 +79,22 @@ drop-in replacement.
 | Sweeps and tuning | Implemented deterministic grid sweeps, Pareto frontier selection, and a pure Swift Protein-style bounded tuner. | `SweepPlan`, `SweepTuner`, `ProteinTuner` |
 | Visualization | Implemented lightweight terminal dashboards and sparklines for logs. | `TrainingMetricSeries`, `TrainingDashboardSnapshot` |
 | Multi-agent simulation | Implemented protocol and matrix-game environment for game-scale API coverage. | `MultiAgentEnvironment`, `MatrixGameEnvironment` |
+| Physics simulator bridge | Implemented as an optional MuJoCo product with state replay, keyframe reset, control-range transforms, contact reporting, and dependency-light simulator adapter metadata in core. | `RLSwiftMuJoCo`, `MuJoCoEnvironment`, `MuJoCoSimulation`, `RobotIntegrationAdapterConfiguration.mujoco(...)` |
+| Isaac Sim sidecar bridge | Implemented as a pure Swift JSON/HTTP client for standalone Isaac Sim, Isaac Lab, or extension sidecars, including seeded reset, domain-randomization metadata, physics-step options, and batch reset/step. | `RLSwiftIsaacSim`, `IsaacSimBridgeClient`, `IsaacSimBatchStepResponse`, `RobotIntegrationAdapterConfiguration.isaacSim(...)` |
 | Recurrent/entity encoders | Recurrent state and a MinGRU actor-critic reference model are implemented; PufferLib-style entity encoders remain a future model-family expansion. | `RecurrentPolicyValueModel`, `MinGRUCell`, `MinGRUState`, `MinGRUDiscreteActorCriticModel` |
 | Distributed async rollout workers | In-process async rollout workers are implemented with Swift actors; multiprocess or remote worker orchestration remains a future distributed runtime layer. | `AsyncVectorizedEnvironmentRunner`, `AsyncVectorizedStepBatch` |
+
+## Simulator Gap Analysis
+
+The robotics need-to-have surface for simulator integration is:
+
+| Need | MuJoCo coverage | Isaac Sim coverage |
+| --- | --- | --- |
+| Reproducible reset and replay | `MuJoCoResetMode.keyframe`, `MuJoCoStateSnapshot`, and restore support. | `IsaacSimResetOptions` with seed, episode id, and randomization metadata. |
+| Safe policy action bounds | `MuJoCoActionMode.clipped` and `normalizedToControlRange` use native actuator control ranges. | `IsaacSimStepOptions` carries physics-step and render intent; sidecars keep robot-specific command bounds. |
+| Contact-rich debugging | `MuJoCoContact` reports geom ids/names, contact pose, normal, and force. | Sidecars can return named sensor vectors and step `info`; camera/lidar rendering is requested through step options. |
+| Vectorized simulator training | One native MuJoCo environment per model/data pair, compatible with `VectorizedEnvironmentRunner`. | `resetMany` and `stepMany` model Isaac Lab-style parallel environments over HTTP. |
+| Dependency isolation | Optional `MuJoCoBackend` trait and system-library target. | Dependency-light Swift HTTP contract; Isaac Sim stays in Python/Omniverse. |
 
 ## Swift 6.3 Performance Notes
 
@@ -103,7 +120,10 @@ integration behind separate products and traits:
 - `MLXBackend` builds `RLSwiftMLX` and is enabled by default for Apple
   development.
 - `TensorRTBackend` builds the native TensorRT path on NVIDIA Linux.
-- `--disable-default-traits` gives a core-only or TensorRT-only build.
+- `MuJoCoBackend` builds `RLSwiftMuJoCo` when MuJoCo headers and libraries are
+  installed.
+- `--disable-default-traits` gives a core-only, TensorRT-only, or MuJoCo-only
+  build.
 
 Useful commands:
 
@@ -112,6 +132,86 @@ swift package show-traits
 swift build --disable-default-traits
 swift test --traits MLXBackend
 swift test --disable-default-traits --traits TensorRTBackend
+swift test --disable-default-traits --traits MuJoCoBackend
+```
+
+## MuJoCo Simulation
+
+`RLSwiftMuJoCo` wraps MJCF/XML models as RLSwift environments. It loads one
+model, owns its MuJoCo data buffer, writes actuator controls from
+`MuJoCoAction`, advances physics for the configured frame skip, and returns
+`MuJoCoObservation` values containing time, `qpos`, `qvel`, sensor data,
+actuator activations, controls, and optional contacts.
+
+Need-to-have robotics features are implemented:
+
+| Feature | API |
+| --- | --- |
+| Actuator range metadata | `MuJoCoActuatorSummary`, `MuJoCoModelSummary.actuators` |
+| Control clipping and normalized policy outputs | `MuJoCoActionMode.clipped`, `MuJoCoActionMode.normalizedToControlRange` |
+| Keyframe reset | `MuJoCoEnvironment.reset(to: .keyframe(...))` |
+| Deterministic replay | `MuJoCoSimulation.stateSnapshot(signature:)`, `MuJoCoSimulation.restore(snapshot:)` |
+| Contact debugging | `MuJoCoContact`, `MuJoCoEnvironmentConfiguration.includeContacts` |
+
+The target is intentionally optional because MuJoCo is a native dependency. Core
+planning code can still describe a MuJoCo runtime without linking MuJoCo:
+
+```swift
+let adapter = try RobotIntegrationAdapterConfiguration.mujoco(
+    modelPath: "humanoid.xml"
+)
+```
+
+Native MuJoCo tests require MuJoCo's `mujoco.pc`, headers, and shared library to
+be visible to SwiftPM:
+
+```sh
+pkg-config --modversion mujoco
+swift test --disable-default-traits --traits MuJoCoBackend
+```
+
+For local or CI environments without a system MuJoCo install, use the bundled
+installer script:
+
+```sh
+eval "$(./scripts/install-mujoco-sdk.sh)"
+swift test --disable-default-traits --traits MuJoCoBackend
+```
+
+## Isaac Sim Bridge
+
+`RLSwiftIsaacSim` connects Swift policy loops to NVIDIA Isaac Sim or Isaac Lab
+through a small JSON/HTTP sidecar contract. Isaac Sim stays in its normal
+Omniverse/Python process, while Swift sends health, reset, and step requests and
+receives `IsaacSimObservation` plus `StepResult`-compatible reward and
+termination semantics.
+
+Need-to-have robotics features are implemented:
+
+| Feature | API |
+| --- | --- |
+| Seeded reset and replay metadata | `IsaacSimResetOptions` |
+| Domain randomization payloads | `IsaacSimResetOptions.randomization` |
+| Physics substeps and render synchronization | `IsaacSimStepOptions` |
+| Isaac Lab-style vectorized environments | `IsaacSimEnvironmentHandle`, `resetMany`, `stepMany` |
+| Batch step conversion into RLSwift results | `IsaacSimBatchStepResponse.stepResults` |
+
+Core planning code can describe the simulator without importing the bridge
+product:
+
+```swift
+let adapter = try RobotIntegrationAdapterConfiguration.isaacSim(
+    endpoint: "http://127.0.0.1:8211",
+    robotPath: "/World/Carter"
+)
+```
+
+The bridge target is dependency-light and does not require Isaac Sim to be
+installed for Swift tests:
+
+```sh
+swift test --filter IsaacSimBridgeTests
+swift package generate-documentation --target RLSwiftIsaacSim
 ```
 
 ## Apple Device Support
@@ -213,7 +313,7 @@ bounded when a learned policy is connected to hardware:
 | Offline datasets | Durable manifests, provenance, timestamps, termination causes, constraint costs, and replayable safety interventions. | `OfflineDataset`, `LoggedTransition`, `DatasetManifest`, `DatasetProvenance` |
 | Deployment planning | Deterministic backend selection for MLX on Apple devices, TensorRT on NVIDIA Linux, and core Swift fallback deployments. | `DeploymentTarget`, `DeploymentPlan`, `DeploymentBackend` |
 | Observability | Real-time summaries for latency, deadline misses, intervention counts, constraint costs, and policy-version rollout decisions. | `AutonomyTelemetryAccumulator`, `AutonomyTelemetrySummary`, `PolicyVersionRollout` |
-| Robot adapters | Dependency-light ROS 2, simulator, and WendyOS adapter descriptors. | `RobotIntegrationAdapterConfiguration` |
+| Robot adapters | Dependency-light ROS 2, MuJoCo simulator, Isaac Sim bridge, generic simulator, and WendyOS adapter descriptors. | `RobotIntegrationAdapterConfiguration` |
 | Rollout collection | Vectorized environments, vectorization profiles, structured flattened spaces, and distributed rollout sharding. | `VectorizedEnvironmentRunner`, `VectorizationProfile`, `StructuredObservationSchema`, `StructuredActionSchema`, `RolloutShardAssignment` |
 | Export and engine cache | ONNX export descriptors and TensorRT engine cache metadata. | `ONNXExportDescriptor`, `TensorRTEngineCacheKey`, `TensorRTEngineCacheManifest` |
 | Training workflows | Curriculum learning, domain randomization, evaluation dashboards, checkpoint manifests, and self-play opponent pools. | `CurriculumStage`, `CurriculumSchedule`, `DomainRandomizationParameter`, `DomainRandomizationProfile`, `EvaluationRecord`, `EvaluationDashboardSummary`, `PolicyCheckpointManifest`, `SelfPlayOpponentPool` |
@@ -263,8 +363,18 @@ bounded when a learned policy is connected to hardware:
 - `TensorRTBackendSupport`, `TensorRTPolicyConfiguration`,
   `TensorRTCUDAKernelPlan`, and `TensorRTPolicyBackend` for NVIDIA Linux
   TensorRT inference.
+- `MuJoCoBackendSupport`, `MuJoCoEnvironment`, `MuJoCoObservation`, and
+  `MuJoCoRewardSource` for native MuJoCo simulator loops, plus
+  `MuJoCoStateSnapshot`, `MuJoCoActionMode`, and `MuJoCoContact` for replay,
+  bounded control, and contact debugging.
+- `IsaacSimBackendSupport`, `IsaacSimBridgeClient`, `IsaacSimObservation`, and
+  `IsaacSimStepResponse` for Isaac Sim sidecar loops, plus
+  `IsaacSimResetOptions`, `IsaacSimStepOptions`, `IsaacSimEnvironmentHandle`,
+  and batch reset/step response types for Isaac Lab-style parallel simulation.
 
 Public interfaces are documented with DocC comments and a DocC catalog at
 `Sources/RLSwift/RLSwift.docc`,
-`Sources/RLSwiftMLX/RLSwiftMLX.docc`, and
-`Sources/RLSwiftTensorRT/RLSwiftTensorRT.docc`.
+`Sources/RLSwiftMLX/RLSwiftMLX.docc`,
+`Sources/RLSwiftTensorRT/RLSwiftTensorRT.docc`,
+`Sources/RLSwiftMuJoCo/RLSwiftMuJoCo.docc`, and
+`Sources/RLSwiftIsaacSim/RLSwiftIsaacSim.docc`.

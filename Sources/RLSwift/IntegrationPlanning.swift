@@ -85,6 +85,51 @@ public struct RobotIntegrationAdapterConfiguration: Sendable, Equatable, Codable
         )
     }
 
+    /// Creates a MuJoCo simulator adapter configuration.
+    public static func mujoco(
+        modelPath: String,
+        observationStream: String = "qpos,qvel,sensors",
+        actionStream: String = "ctrl",
+        metadata: [String: String] = [:]
+    ) throws -> RobotIntegrationAdapterConfiguration {
+        guard !modelPath.isEmpty else {
+            throw RLSwiftError.emptyIdentifier(name: "mujoco.modelPath")
+        }
+        var enrichedMetadata = metadata
+        enrichedMetadata["simulator"] = "mujoco"
+        enrichedMetadata["modelPath"] = modelPath
+        return try RobotIntegrationAdapterConfiguration(
+            kind: .simulator,
+            endpoint: modelPath,
+            observationChannel: observationStream,
+            actionChannel: actionStream,
+            metadata: enrichedMetadata
+        )
+    }
+
+    /// Creates an Isaac Sim bridge adapter configuration.
+    public static func isaacSim(
+        endpoint: String,
+        robotPath: String = "/World/Robot",
+        observationStream: String = "observation",
+        actionStream: String = "action",
+        metadata: [String: String] = [:]
+    ) throws -> RobotIntegrationAdapterConfiguration {
+        guard !robotPath.isEmpty else {
+            throw RLSwiftError.emptyIdentifier(name: "isaacSim.robotPath")
+        }
+        var enrichedMetadata = metadata
+        enrichedMetadata["simulator"] = "isaac-sim"
+        enrichedMetadata["robotPath"] = robotPath
+        return try RobotIntegrationAdapterConfiguration(
+            kind: .simulator,
+            endpoint: endpoint,
+            observationChannel: observationStream,
+            actionChannel: actionStream,
+            metadata: enrichedMetadata
+        )
+    }
+
     /// Creates a WendyOS adapter configuration.
     public static func wendyOS(
         device: String,

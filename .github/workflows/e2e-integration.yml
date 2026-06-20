@@ -80,6 +80,12 @@ jobs:
           swift --version
           swift test --disable-default-traits --parallel
 
+      - name: Run default Linux tests
+        run: swift test --parallel
+
+      - name: Run Isaac Sim bridge tests
+        run: swift test --filter IsaacSimBridgeTests
+
       - name: Run core-only CLI smoke tests
         run: |
           swift run --disable-default-traits rl-swift catalog
@@ -90,6 +96,12 @@ jobs:
       - name: Run RobotGridWorld example
         working-directory: Examples/RobotGridWorld
         run: swift run robot-grid-world
+
+      - name: Install MuJoCo SDK
+        run: ./scripts/install-mujoco-sdk.sh
+
+      - name: Run MuJoCo trait tests
+        run: swift test --disable-default-traits --traits MuJoCoBackend --filter MuJoCoIntegrationTests
 
       - name: Run TensorRT-guarded tests (best effort)
         continue-on-error: true

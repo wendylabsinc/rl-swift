@@ -231,7 +231,28 @@ import Testing
             observationStream: "observations",
             actionStream: "actions"
         )
-        #expect([ros.kind, sim.kind, wendy.kind] == [.ros2, .simulator, .wendyOS])
+        let mujoco = try RobotIntegrationAdapterConfiguration.mujoco(
+            modelPath: "humanoid.xml",
+            metadata: ["task": "walk"]
+        )
+        let isaac = try RobotIntegrationAdapterConfiguration.isaacSim(
+            endpoint: "http://127.0.0.1:8211",
+            robotPath: "/World/Carter",
+            metadata: ["task": "nav"]
+        )
+        #expect([ros.kind, sim.kind, wendy.kind, mujoco.kind, isaac.kind] == [.ros2, .simulator, .wendyOS, .simulator, .simulator])
+        #expect(mujoco.endpoint == "humanoid.xml")
+        #expect(mujoco.observationChannel == "qpos,qvel,sensors")
+        #expect(mujoco.actionChannel == "ctrl")
+        #expect(mujoco.metadata["simulator"] == "mujoco")
+        #expect(mujoco.metadata["modelPath"] == "humanoid.xml")
+        #expect(mujoco.metadata["task"] == "walk")
+        #expect(isaac.endpoint == "http://127.0.0.1:8211")
+        #expect(isaac.observationChannel == "observation")
+        #expect(isaac.actionChannel == "action")
+        #expect(isaac.metadata["simulator"] == "isaac-sim")
+        #expect(isaac.metadata["robotPath"] == "/World/Carter")
+        #expect(isaac.metadata["task"] == "nav")
 
         var vectorized = try VectorizedEnvironmentRunner([CounterEnvironment(), CounterEnvironment()])
         #expect(vectorized.count == 2)
@@ -476,6 +497,12 @@ import Testing
         }
         #expect(throws: RLSwiftError.emptyIdentifier(name: "adapter.actionChannel")) {
             _ = try RobotIntegrationAdapterConfiguration(kind: .ros2, endpoint: "endpoint", observationChannel: "obs", actionChannel: "")
+        }
+        #expect(throws: RLSwiftError.emptyIdentifier(name: "mujoco.modelPath")) {
+            _ = try RobotIntegrationAdapterConfiguration.mujoco(modelPath: "")
+        }
+        #expect(throws: RLSwiftError.emptyIdentifier(name: "isaacSim.robotPath")) {
+            _ = try RobotIntegrationAdapterConfiguration.isaacSim(endpoint: "http://localhost", robotPath: "")
         }
         #expect(throws: RLSwiftError.invalidCapacity(0)) {
             _ = try VectorizedEnvironmentRunner<CounterEnvironment>([])

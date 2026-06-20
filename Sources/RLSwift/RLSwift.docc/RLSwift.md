@@ -20,9 +20,12 @@ same environment loop.
 Tensor integrations live in separate products. `RLSwiftMLX` provides MLX tensor
 adapters when the `MLXBackend` package trait is enabled. `RLSwiftTensorRT`
 provides a TensorRT backend on Linux builds when the `TensorRTBackend` trait is
-enabled. This keeps the core RLSwift product dependency-light while allowing
-iOS, iPadOS, visionOS, macOS, DGX, Jetson, and NVIDIA Linux deployments to select
-the backend they need.
+enabled. `RLSwiftMuJoCo` provides MuJoCo physics simulation when the
+`MuJoCoBackend` trait is enabled and MuJoCo is installed. `RLSwiftIsaacSim`
+provides a JSON/HTTP bridge client for NVIDIA Isaac Sim sidecars. This keeps the
+core RLSwift product dependency-light while allowing iOS, iPadOS, visionOS,
+macOS, DGX, Jetson, simulator, and NVIDIA Linux deployments to select the
+backend they need.
 
 Hot vector transforms use Swift 6 ownership features where they are portable
 across the declared deployment targets. Internally, RLSwift uses move-only
@@ -74,8 +77,9 @@ freshness, deadline, and envelope checks outside the policy; ``OfflineDataset``
 stores replayable logged data with provenance; and
 ``AutonomyTelemetryAccumulator`` summarizes latency, safety, constraints, and
 policy-version rollout behavior. Dependency-light descriptors cover ROS 2,
-simulator, WendyOS, vectorized rollout, ONNX export, TensorRT engine cache,
-curriculum, domain randomization, evaluation, and visual debugging workflows.
+MuJoCo simulator, Isaac Sim bridge, WendyOS, vectorized rollout, ONNX export,
+TensorRT engine cache, curriculum, domain randomization, evaluation, and visual
+debugging workflows.
 
 ## Training Workflows
 
