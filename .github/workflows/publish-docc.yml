@@ -62,10 +62,25 @@ jobs:
           DOCC_HOSTING_BASE_PATH: ${{ github.event.repository.name }}
         run: ./scripts/build-docc-site.sh --output-path .build/docc-site --hosting-base-path "$DOCC_HOSTING_BASE_PATH"
 
+      - name: Archive GitHub Pages artifact
+        run: |
+          tar \
+            --dereference --hard-dereference \
+            --directory .build/docc-site \
+            -cvf "$RUNNER_TEMP/artifact.tar" \
+            .
+          tar -tf "$RUNNER_TEMP/artifact.tar" | grep -q './RLSwiftIsaacSim/css/index.'
+          tar -tf "$RUNNER_TEMP/artifact.tar" | grep -q './RLSwiftIsaacSim/js/index.'
+          tar -tf "$RUNNER_TEMP/artifact.tar" | grep -q './RLSwiftMuJoCo/css/index.'
+          tar -tf "$RUNNER_TEMP/artifact.tar" | grep -q './RLSwiftMuJoCo/js/index.'
+
       - name: Upload GitHub Pages artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-artifact@v4
         with:
-          path: .build/docc-site
+          name: github-pages
+          path: ${{ runner.temp }}/artifact.tar
+          retention-days: 1
+          if-no-files-found: error
 
   deploy:
     name: Deploy GitHub Pages
