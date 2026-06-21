@@ -48,6 +48,53 @@ rm -rf "$output_path"
 mkdir -p "$output_path"
 touch "$output_path/.nojekyll"
 
+renderer_assets_path() {
+  local runtime_resource_path
+  runtime_resource_path="$(
+    swiftc -print-target-info \
+      | sed -n 's/.*"runtimeResourcePath"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' \
+      | head -n 1
+  )"
+
+  if [[ -n "$runtime_resource_path" ]]; then
+    local candidate="${runtime_resource_path%/lib/swift}/share/docc/render"
+    if [[ -d "$candidate" ]]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
+ensure_renderer_assets() {
+  local target="$1"
+  local destination="$output_path/$target"
+  local renderer_assets="$2"
+
+  for asset_dir in css js; do
+    if ! find "$destination/$asset_dir" -maxdepth 1 -type f -name 'index.*' 2>/dev/null | grep -q .; then
+      if [[ ! -d "$renderer_assets/$asset_dir" ]]; then
+        printf 'DocC renderer assets missing: %s\n' "$renderer_assets/$asset_dir" >&2
+        exit 1
+      fi
+
+      rm -rf "$destination/$asset_dir"
+      cp -R "$renderer_assets/$asset_dir" "$destination/$asset_dir"
+    fi
+
+    if ! find "$destination/$asset_dir" -maxdepth 1 -type f -name 'index.*' | grep -q .; then
+      printf 'DocC %s renderer assets were not written for %s\n' "$asset_dir" "$target" >&2
+      exit 1
+    fi
+  done
+}
+
+if ! docc_renderer_assets="$(renderer_assets_path)"; then
+  printf 'Could not locate Swift-DocC renderer assets from swiftc -print-target-info\n' >&2
+  exit 1
+fi
+
 generate_target() {
   local target="$1"
   shift
@@ -61,6 +108,7 @@ generate_target() {
     --output-path "$destination" \
     --transform-for-static-hosting \
     --hosting-base-path "$hosting_base_path/$target"
+  ensure_renderer_assets "$target" "$docc_renderer_assets"
 }
 
 generate_target "RLSwift"
