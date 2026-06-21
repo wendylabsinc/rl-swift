@@ -51,6 +51,10 @@ restore it with ``MuJoCoSimulation/restore(snapshot:includeContacts:)``.
 
 ## Topics
 
+### Articles
+
+- <doc:UsingMuJoCoBridge>
+
 ### Platform Support
 
 - ``MuJoCoBackendSupport``

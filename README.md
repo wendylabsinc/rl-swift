@@ -40,6 +40,21 @@ swift package --disable-default-traits --traits MuJoCoBackend generate-documenta
 swift package generate-documentation --target RLSwiftIsaacSim
 ```
 
+## Documentation Site
+
+DocC reference pages and simulator bridge articles are published to GitHub Pages
+from the `Publish DocC` workflow. The site builds static documentation for
+`RLSwift`, `RLSwiftIsaacSim`, and `RLSwiftMuJoCo`.
+
+To build the same site locally:
+
+```sh
+eval "$(./scripts/install-mujoco-sdk.sh)"
+./scripts/build-docc-site.sh --output-path .build/docc-site --hosting-base-path rl-swift
+```
+
+The generated site entry point is `.build/docc-site/index.html`.
+
 ## CLI Workflow
 
 The root package includes an `rl-swift` executable for local smoke tests and CI
